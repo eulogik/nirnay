@@ -2,7 +2,7 @@
 
 ## Repo status
 
-- Scaffolded for plan §5 Days 1–14 + Days 15–35 entry: Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine), gate scripts `scripts/check_*.py` (G1–G12), `GATES.md` (**12/12 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` still has **zero commits**. No lint/typecheck/CI yet — do not invent them.
+- Scaffolded for plan §5 Days 1–14 + Days 15–35 entry: Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine), gate scripts `scripts/check_*.py` (G1–G12), `GATES.md` (**12/12 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
 - `MEMORY.md` holds session state, verified facts, and open risks. Read it before starting work.
 
 ## Source of truth
