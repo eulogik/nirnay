@@ -1,0 +1,25 @@
+# uv
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# models / caches
+*.safetensors
+.cache/
+hf_cache/
+
+# third_party: local reference clones (Laya, JevBench, pico-type) — not pushed.
+# Re-clone for verification (see README § Verify). Frozen public eval data is
+# fetched with the JevBench clone.
+third_party/
+
+# unlazy local state
+.unlazy/
+.unlazy-hook-state.json
+.claude/settings.local.json
+
+# OS
+.DS_Store
