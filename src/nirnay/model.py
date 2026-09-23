@@ -9,10 +9,12 @@ from .data import (
     DecisionExample,
     build_phase_a_mix,
     freeze_hashes,
+    load_banking77_dir,
     split_train_heldout,
     to_laya_record,
 )
 from .deepsup import DEEP_LAYERS, DEEP_WEIGHT, DeepSupervision
+from .eval import EvalMetrics, evaluate_logits, evaluate_probs
 from .hypercube import hypercube_adjacency, hypercube_mask, should_apply
 from .lora import LoRALinear, apply_lora, count_frozen, count_trainable
 from .losses import (
@@ -31,7 +33,15 @@ from .rlcd import (
     rlcd_total_loss,
 )
 from .sgdr import SGDROUTERConfig, route_blocks
-from .train import NirnayTrainModel, PhaseASFT, collate_examples, encode_examples
+from .train import (
+    NirnayTrainModel,
+    PhaseASFT,
+    PhaseBRLCD,
+    collate_examples,
+    encode_examples,
+    run_phase_a,
+    run_phase_b,
+)
 
 __all__ = [
     "BytePath",
@@ -63,6 +73,7 @@ __all__ = [
     "DecisionExample",
     "build_phase_a_mix",
     "freeze_hashes",
+    "load_banking77_dir",
     "split_train_heldout",
     "to_laya_record",
     "LoRALinear",
@@ -77,6 +88,12 @@ __all__ = [
     "plan_loss_from_batch",
     "NirnayTrainModel",
     "PhaseASFT",
+    "PhaseBRLCD",
     "collate_examples",
     "encode_examples",
+    "run_phase_a",
+    "run_phase_b",
+    "EvalMetrics",
+    "evaluate_logits",
+    "evaluate_probs",
 ]

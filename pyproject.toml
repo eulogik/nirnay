@@ -25,6 +25,7 @@ dev = [
 
 [project.scripts]
 nirnay-server = "nirnay.server:main"
+nirnay-train = "nirnay.train:main"
 
 [build-system]
 requires = ["hatchling"]

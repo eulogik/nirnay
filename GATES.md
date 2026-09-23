@@ -2,7 +2,7 @@
 
 OWNS: src/nirnay/**, tests/**, scripts/**, pyproject.toml, uv.lock, GATES.md
 
-Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking only, unified [MASK] scorer, per-bucket temps refit, and a Jev-compatible `/v1/systemone` server that returns valid distributions for N questions in one pass. Days 15–35 entry: concept bottleneck + MoME, deep supervision at 4/8/12, RLCD++ losses, 2-stage coarse-to-fine, G1–G7 regression, then training-stack wiring — §2 data pipeline (hash-frozen mix, 80/20 split), plan loss assembly (exact 0.3/0.2/λ coefficients), and Phase A SFT smoke (LoRA + additions train, encoder base frozen). Full milestones (fitted ECE ≤0.08, Banking77 ≥0.65) stay plan §5 contracts for rented-GPU sessions and are deliberately not gates here.
+Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking only, unified [MASK] scorer, per-bucket temps refit, and a Jev-compatible `/v1/systemone` server that returns valid distributions for N questions in one pass. Days 15–35: concept bottleneck + MoME, deep supervision at 4/8/12, RLCD++ losses, 2-stage coarse-to-fine, G1–G7 regression, training-stack wiring (§2 data pipeline, plan loss assembly, Phase A SFT smoke), then runnable training path — real Banking77 corpus, Phase A CLI checkpointing, Phase B RLCD smoke, held-out eval with raw+fitted ECE. Full milestones (fitted ECE ≤0.08, Banking77 ≥0.65) stay plan §5 contracts for rented-GPU sessions and are deliberately not gates here.
 
 - [x] G1: Project installs and core package imports cleanly
   CHECK: uv run python -c "import nirnay; import nirnay.model; import nirnay.server; print('nirnay import ok')"
@@ -78,3 +78,23 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
   CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py
   EXPECT: PHASE_A_OK
   EVIDENCE: automatic-evidence=v1; definition-sha256=4df6139e56ab59cc418c017138dbf52c0cfb1d11af29491dc5a65d0369812d11; exit=0; EXPECT=matched; output-sha256=17d8e03b71457acaf443b0d10f5b9d3b8c04bfb7404be5008fb8ba11b517cfd3; output-bytes=522; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G16: Real Banking77 corpus lands as §2 training data: ≥10000 examples, all 77 official intents present, stable content hashes, 80/20 split with zero id overlap, no Jev-derived fields
+  CHECK: uv run python scripts/check_banking77_data.py
+  EXPECT: BANKING77_DATA_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=172de36b37ecc1b9055bbc60346d0fea63741be4ebde0861fa87ebd9e90d9996; exit=0; EXPECT=matched; output-sha256=8b358caf761f02a80ef979902dd1f7fcb73170684c4a6c7e427f206c254f8782; output-bytes=80; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G17: Phase A CLI runs end-to-end on the local mix: writes freeze manifest, finite loss history JSON, and a trainable-state checkpoint; encoder base remains frozen
+  CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_cli.py
+  EXPECT: PHASE_A_CLI_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=6363a34005524df14a44b5e4dff6a26a8c2a784bb7871beb47259666e1648486; exit=0; EXPECT=matched; output-sha256=d3507496b31098ae1b5c431293306edb06812feb45e0f93c4b5975ecf5a2dd50; output-bytes=664; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G18: Phase B RLCD smoke: Gaussian logit noise sampling, group-mean advantages sum ~0 per group, Brier+correctness rewards in [0,1], policy loss finite over ≥3 steps
+  CHECK: uv run python scripts/check_phase_b_rlcd.py
+  EXPECT: PHASE_B_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=a5dfa6aaaa35e7cccc4c28fbd33c0cfcee4c4a2b7a2ebe450d7cddbce65416e9; exit=0; EXPECT=matched; output-sha256=08d1761ac46fe44a9c93181e88582102e622be1780e7b6cc926f3b05d697637d; output-bytes=489; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G19: Held-out eval reports accuracy, Brier, raw ECE, and fitted ECE together (never fitted-only) on a non-empty batch with finite metrics
+  CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_eval_ece.py
+  EXPECT: EVAL_ECE_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=2b5a7cbc898d2e30e8c0adbeb7608be7e7a1de1b698053b272962afdda8765f8; exit=0; EXPECT=matched; output-sha256=eb5fc3c9aa6997ef2b31f99d1e116a6bf39cf90335f217018faed3e9c76ae3cc; output-bytes=120; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries

@@ -282,6 +282,54 @@ def load_banking77_cache(path: str | Path) -> list[DecisionExample]:
     return banking77_choice_examples(pairs)
 
 
+def load_banking77_csv(path: str | Path, split: str = "train") -> list[DecisionExample]:
+    """Load official PolyAI CSVs (`text,category`) into choice decisions.
+
+    Source: github.com/PolyAI-LDN/task-specific-datasets banking_data/{train,test}.csv
+    (CC-BY-4.0; same 77-name order as BANKING77_LABELS).
+    """
+    import csv as _csv
+
+    path = Path(path)
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = _csv.DictReader(f)
+        if reader.fieldnames is None or "text" not in reader.fieldnames:
+            raise ValueError(f"{path}: expected text column, got {reader.fieldnames}")
+        cat_key = "category" if "category" in reader.fieldnames else "label"
+        pairs: list[tuple[str, int]] = []
+        for i, row in enumerate(reader):
+            cat = row[cat_key]
+            if cat not in BANKING77_LABELS:
+                raise ValueError(f"{path}: unknown intent {cat!r} at row {i}")
+            pairs.append((row["text"], BANKING77_LABELS.index(cat)))
+    out = banking77_choice_examples(pairs, limit=None)
+    # Disambiguate train/test ids when concatenated
+    return [
+        DecisionExample(
+            id=f"{ex.id}" if split == "train" else f"banking77-{split}-{i:05d}",
+            source=ex.source,
+            qtype=ex.qtype,
+            state=ex.state,
+            instructions=ex.instructions,
+            answer=ex.answer,
+            criteria=ex.criteria,
+            meta={**ex.meta, "split": split},
+        )
+        for i, ex in enumerate(out)
+    ]
+
+
+def load_banking77_dir(root: str | Path) -> list[DecisionExample]:
+    """Load data/banking77/{train,test}.csv if present (else empty list)."""
+    root = Path(root)
+    out: list[DecisionExample] = []
+    for split in ("train", "test"):
+        p = root / f"{split}.csv"
+        if p.exists():
+            out.extend(load_banking77_csv(p, split=split))
+    return out
+
+
 def build_phase_a_mix(
     n_synth: int = 96,
     banking_cache: str | Path | None = None,
@@ -291,7 +339,12 @@ def build_phase_a_mix(
     """§2 mix available locally: synthetic policies (+ Banking77 if cached)."""
     examples = synthetic_policy_examples(n=n_synth, seed=seed)
     if banking_cache is not None and Path(banking_cache).exists():
-        examples.extend(load_banking77_cache(banking_cache)[:banking_limit])
+        p = Path(banking_cache)
+        if p.is_dir():
+            bank = load_banking77_dir(p)
+        else:
+            bank = load_banking77_cache(p)
+        examples.extend(bank[:banking_limit] if banking_limit else bank)
     return examples
 
 

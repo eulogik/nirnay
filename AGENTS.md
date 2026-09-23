@@ -2,7 +2,8 @@
 
 ## Repo status
 
-- Scaffolded for plan §5 Days 1–14 + Days 15–35 (entry + training stack): Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine + data/lora/losses/train), gate scripts `scripts/check_*.py` (G1–G15), `GATES.md` (**15/15 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
+- Scaffolded for plan §5 Days 1–14 + Days 15–35 (entry + training stack): Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine + data/lora/losses/train/eval), gate scripts `scripts/check_*.py` (G1–G19), `GATES.md` (**19/19 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
+- Banking77 CSVs (CC-BY-4.0, PolyAI task-specific-datasets) live in `data/banking77/{train,test}.csv` — tracked; do not delete.
 - `MEMORY.md` holds session state, verified facts, and open risks. Read it before starting work.
 
 ## Source of truth
@@ -47,6 +48,15 @@ HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python s
 uv run python scripts/check_data_pipeline.py  # G13
 uv run python scripts/check_loss_assembly.py  # G14
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py # G15
+uv run python scripts/check_banking77_data.py # G16
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_cli.py # G17
+uv run python scripts/check_phase_b_rlcd.py   # G18
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_eval_ece.py # G19
+
+# Phase A/B training CLI
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
+  uv run python -m nirnay.train --phase a --steps 100 --batch-size 8 --out-dir artifacts/phase_a
+uv run python -m nirnay.train --phase b --steps 50 --out-dir artifacts/phase_a
 ```
 
 Gate ledger:
