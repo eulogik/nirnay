@@ -2,7 +2,7 @@
 
 OWNS: src/nirnay/**, tests/**, scripts/**, pyproject.toml, uv.lock, GATES.md
 
-Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking only, unified [MASK] scorer, per-bucket temps refit, and a Jev-compatible `/v1/systemone` server that returns valid distributions for N questions in one pass. Days 15–35 entry (this ledger's open gates): concept bottleneck + MoME module, deep supervision at encoder layers 4/8/12, RLCD++ loss suite (Brier + decision-token CE + REINFORCE group baseline), 2-stage coarse-to-fine scorer, and full G1–G7 regression after those modules land. Training milestones (fitted ECE ≤0.08, Banking77 ≥0.65) stay plan §5 contracts for rented-GPU sessions and are deliberately not gates here.
+Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking only, unified [MASK] scorer, per-bucket temps refit, and a Jev-compatible `/v1/systemone` server that returns valid distributions for N questions in one pass. Days 15–35 entry: concept bottleneck + MoME, deep supervision at 4/8/12, RLCD++ losses, 2-stage coarse-to-fine, G1–G7 regression, then training-stack wiring — §2 data pipeline (hash-frozen mix, 80/20 split), plan loss assembly (exact 0.3/0.2/λ coefficients), and Phase A SFT smoke (LoRA + additions train, encoder base frozen). Full milestones (fitted ECE ≤0.08, Banking77 ≥0.65) stay plan §5 contracts for rented-GPU sessions and are deliberately not gates here.
 
 - [x] G1: Project installs and core package imports cleanly
   CHECK: uv run python -c "import nirnay; import nirnay.model; import nirnay.server; print('nirnay import ok')"
@@ -63,3 +63,18 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
   CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_regression.py
   EXPECT: REGRESSION_OK
   EVIDENCE: automatic-evidence=v1; definition-sha256=1873e2aea80be6504bd55101771564fc3fe04e574046f302defe55e5c3669d8c; exit=0; EXPECT=matched; output-sha256=dafc62c6f50950c6ba3413c8f906a0b47ca1ebc78d5b6080f4edfed85edd3289; output-bytes=48; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G13: §2 data pipeline: builds decision examples from synthetic policies + Banking77 (77 official intents), freezes stable SHA256 content hashes, splits 80/20 train/heldout with zero id overlap, formats Laya-compatible state/question/answer fields, no Jev-derived fields
+  CHECK: uv run python scripts/check_data_pipeline.py
+  EXPECT: DATA_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=2a82bac6c8dfc188329fe3199719294e5593fd938073ccdf49a71a7ba8c9029e; exit=0; EXPECT=matched; output-sha256=910980e4904e0c8ee5eac9fdc3e3dee4fd5aa8163482dfb82f5e6052b5c8ad30; output-bytes=101; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G14: Plan §2 loss assembly: total = choiceCE + RPS + noulBCE + relational + 0.3·NCP + 0.2·deep + λ·calCE with exact coefficients on fixed tensors (reproduces hand-computed sum), RPS/noul/choice components each finite as defined
+  CHECK: uv run python scripts/check_loss_assembly.py
+  EXPECT: LOSS_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=71c4c48e874a2a5f8e0d46021d67eab4c5acf6c8402094640aa63c195ad71e51; exit=0; EXPECT=matched; output-sha256=6bf52a24120ed6347a14dc4d65d4cc103c8324fe3097132100e2735ee4880b94; output-bytes=94; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+
+- [x] G15: Phase A SFT smoke on Laya backbone: encoder base weights frozen, LoRA + concept/deepsup trainable, plan loss backward+step succeeds for ≥3 steps with finite loss, deepsup grads present at layers 4/8/12, NCP loss in graph
+  CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py
+  EXPECT: PHASE_A_OK
+  EVIDENCE: automatic-evidence=v1; definition-sha256=4df6139e56ab59cc418c017138dbf52c0cfb1d11af29491dc5a65d0369812d11; exit=0; EXPECT=matched; output-sha256=17d8e03b71457acaf443b0d10f5b9d3b8c04bfb7404be5008fb8ba11b517cfd3; output-bytes=522; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries

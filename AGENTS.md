@@ -2,7 +2,7 @@
 
 ## Repo status
 
-- Scaffolded for plan §5 Days 1–14 + Days 15–35 entry: Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine), gate scripts `scripts/check_*.py` (G1–G12), `GATES.md` (**12/12 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
+- Scaffolded for plan §5 Days 1–14 + Days 15–35 (entry + training stack): Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine + data/lora/losses/train), gate scripts `scripts/check_*.py` (G1–G15), `GATES.md` (**15/15 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
 - `MEMORY.md` holds session state, verified facts, and open risks. Read it before starting work.
 
 ## Source of truth
@@ -44,6 +44,9 @@ uv run python scripts/check_deepsup.py       # G9
 uv run python scripts/check_rlcd.py          # G10
 uv run python scripts/check_coarse_to_fine.py # G11
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_regression.py # G12 (runs G1–G7)
+uv run python scripts/check_data_pipeline.py  # G13
+uv run python scripts/check_loss_assembly.py  # G14
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py # G15
 ```
 
 Gate ledger:

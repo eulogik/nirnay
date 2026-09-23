@@ -5,13 +5,13 @@ Session state for the NIRNAY repo. Update when decisions, verified facts, or pro
 ## State (as of 2026-09-23)
 
 - Git: branch `main` tracks **private** `https://github.com/eulogik/nirnay` (root commit `1047a72`, 33 files; `third_party/` gitignored — re-clone per README). Identity: Team Eulogik <developers@eulogik.com>.
-- Code: scaffold landed — `src/nirnay/{__init__,model,bytes,nope,hypercube,sgdr,temps,agent,server}.py`, `scripts/check_*.py` (G1–G7), `pyproject.toml`, `uv.lock`, `README`, `.gitignore`. No lint/typecheck/CI.
-- **GATES.md: 12/12 MET** (G1–G7 Days 1–14 + G8–G12 Days 15–35 entry, automatic-evidence=v1). New modules: `src/nirnay/{concepts,deepsup,rlcd,coarse2fine}.py` + `scripts/check_{concepts,deepsup,rlcd,coarse_to_fine,regression}.py`. Concept params 4,739,012 ≤17M budget. Full G1–G7 regression green after module land.
+- Code: scaffold landed — `src/nirnay/**` incl. `data,lora,losses,train` + prior modules; `scripts/check_*.py` (G1–G15), `pyproject.toml`, `uv.lock`, `README`, `LICENSE`, `.gitignore`. No lint/typecheck/CI.
+- **GATES.md: 15/15 MET** (G1–G7 Days 1–14; G8–G12 Days 15–35 entry modules; G13–G15 training stack — data pipeline hash-freeze/80-20, plan loss exact 0.3/0.2/λ, Phase A SFT smoke). Modules: `concepts,deepsup,rlcd,coarse2fine` + `data,lora,losses,train`. Concept params 4,739,012 ≤17M. G15 result: 112 LoRA wraps, encoder frozen, deepsup hooks {4,8,12}, 3 steps loss 2.52→2.43.
 - Plan amended **2026-09-23** (append-only, now 180 lines): Cheap Verifiers arXiv:2609.01345 clauses in §3 Rules (no act/escalate/abstain-head metric as delivered-error evidence), §6 Never (+external ground truth, +no rejected-tail self-labels), §7 flywheel (external labels only), Sources + amendment log. Impact: no change to G1–G7 or Day gates; constrains future operational delivered-error reporting and flywheel label pipeline.
 - Model: Laya 421M (`421293827` params) in HF cache; sha256 `891102d372688fc2a094dac56a384bc537b87c63f21f9f3dac0be2b7cbc8d86c`; offline load ~26s CPU. Warning: checkpoint ships temps outside [0.5,5] (choice:11+ clamped from 0.1006).
 - Gate results of record: G2 `FORWARD_OK distributions=valid nope=patch… masked=True heads=16`; G5 `SERVER_SCHEMA_OK`; G7 `JEVbench_PUBLIC_OK schema_validity=1.000 accuracy=0.600 n=60 limit=60`.
 - Public JevBench suite is only 231 items; full ≥70 claim needs held-out data (G7 uses limit 60).
-- Next: Days 15–35 remainder — wire concept/deepsup/rlcd/coarse2fine into the training stack (data loaders for §2 recipe, Phase A SFT script), then rented-GPU training toward gate fitted ECE ≤0.08 / Banking77 ≥0.65. Push with `git push origin main` when asked.
+- Next: rented-GPU Phase A/B runs toward §3 targets (fitted ECE ≤0.08, Banking77 ≥0.65) — data box still needs real Banking77 corpus (aria2c `PolyAI/banking77`) + §2 policy set (~10k); Local→GPU recipe: `uv run python -m nirnay.train` not yet a CLI (use `PhaseASFT` API). Push with `git push origin main` when asked (not pushed yet).
 
 ## Decisions (do not reverse casually)
 

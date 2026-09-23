@@ -48,6 +48,7 @@ bytes → coding-rate patches → Laya 421M fork (NoPE head-masking)
 | `nirnay.nope` | §1.2 | NoPE mask on 1/3 global heads — zero new params |
 | `nirnay.concepts` | §1.3 | Product-VQ 128-dim / chunk-4 / 32-codes, MoME M=4, NCP loss |
 | `nirnay.hypercube` · `nirnay.sgdr` | §1.4–5 | Sparse wiring + training-free long-range blocks |
+| `nirnay.data` · `lora` · `losses` · `train` | §2 | Hash-frozen mix, LoRA, plan loss (0.3/0.2/λ), Phase A SFT |
 | `nirnay.deepsup` | §1 | Aux CE at encoder layers 4 / 8 / 12 (`0.2 · L_deep`) |
 | `nirnay.rlcd` | §1.8, §2 | RLCD++: bounded Brier reward, calCE, group-mean baseline |
 | `nirnay.coarse2fine` | §1.3 | Stage-1 top-20 retrieve → stage-2 pointer (77-way) |
@@ -99,7 +100,7 @@ Answer shape: `answers.decision.{choice|probabilities}` — valid distributions,
 
 ## Verify
 
-Every claim below is machine-checked. The ledger lives in [`GATES.md`](./GATES.md) (**12 / 12 met** with automatic evidence).
+Every claim below is machine-checked. The ledger lives in [`GATES.md`](./GATES.md) (**15 / 15 met** with automatic evidence).
 
 ```bash
 # structural gates (no model download)
@@ -116,6 +117,9 @@ uv run python scripts/check_forward.py         # G2  one pass, valid dists
 uv run python scripts/check_server_schema.py   # G5  /v1/systemone schema
 uv run python scripts/check_jevbench_public.py # G7  public suite accuracy
 uv run python scripts/check_regression.py      # G12 runs G1–G7 end-to-end
+uv run python scripts/check_data_pipeline.py  # G13 77 intents, hash freeze, 80/20
+uv run python scripts/check_loss_assembly.py  # G14 exact 0.3 / 0.2 / λ coeffs
+HF_HOME=… HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py  # G15 Phase A SFT
 ```
 
 Third-party references (Laya, JevBench, pico-type) are **not** vendored:
@@ -139,7 +143,7 @@ node ~/.agents/skills/unlazy/scripts/gate-check.mjs --status GATES.md
 | Phase (plan §5) | State |
 |---|---|
 | Days 1–14 — Fork + parity | **Done** — G1–G7 met (forward, byte path, NoPE, server, temps, JevBench public) |
-| Days 15–35 — Calibrate + MoME | **Entry done** — concept/MoME, deep supervision, RLCD++, coarse-to-fine (G8–G11) + full regression (G12). Training → rented GPU |
+| Days 15–35 — Calibrate + MoME | **Done through training stack** — concept/MoME, deep supervision, RLCD++, coarse-to-fine (G8–G11), full regression (G12), §2 data + plan loss + Phase A SFT smoke (G13–G15) → rented GPU for ECE/Banking77 gates |
 | Days 36–60 — Think + remember | Planned (halting gate, session memory) |
 | Days 61–90 — Harden + launch | Planned (32k sparse, ONNX, Space, JevBench submission) |
 
@@ -153,7 +157,7 @@ Honest open risk: public JevBench accuracy on the local CPU path is **0.600** (n
 
 ```
 NIRNAY-Breakthrough-Plan.md   source of truth (architecture, §3 benchmarks, kill gates)
-GATES.md                      machine-checked completion ledger (G1–G12)
+GATES.md                      machine-checked completion ledger (G1–G15)
 src/nirnay/                   package: bytes, nope, concepts, deepsup, rlcd, …
 scripts/check_*.py            one script per gate — the verification suite
 AGENTS.md · MEMORY.md         agent/session operating notes
