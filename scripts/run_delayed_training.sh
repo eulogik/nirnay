@@ -23,6 +23,7 @@ PRETRAINED_LR=""
 CONCEPTS_LR=""
 CHECKPOINT_EVERY=50
 PROBE_EVERY=""
+N_SYNTH_HARD=""
 MAX_RESTARTS=5
 DRY_RUN=0
 RUN_PHASE_B=0
@@ -44,6 +45,7 @@ usage() {
   printf '%s\n' "Options: --canary-steps N --total-steps N --batch-size N --lr N --checkpoint-every N --max-restarts N"
   printf '%s\n' "         --pretrained-lr FLOAT --concepts-lr FLOAT (param-group lrs; default = --lr)"
   printf '%s\n' "         --probe-every N (heldout probe cadence; default = checkpoint-every; 0 disables)"
+  printf '%s\n' "         --n-synth-hard N (hard-reasoning synthetic items; default 0 = legacy mix)"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -86,6 +88,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --probe-every)
       PROBE_EVERY="${2:-}"
+      shift 2
+      ;;
+    --n-synth-hard)
+      N_SYNTH_HARD="${2:-}"
       shift 2
       ;;
     --max-restarts)
@@ -139,6 +145,9 @@ is_uint "$CHECKPOINT_EVERY" || { printf '%s\n' 'checkpoint interval must be a no
 if [ -n "$PROBE_EVERY" ]; then
   is_uint "$PROBE_EVERY" || { printf '%s\n' 'probe interval must be a non-negative integer' >&2; exit 2; }
 fi
+if [ -n "$N_SYNTH_HARD" ]; then
+  is_uint "$N_SYNTH_HARD" || { printf '%s\n' 'n-synth-hard must be a non-negative integer' >&2; exit 2; }
+fi
 is_uint "$MAX_RESTARTS" || { printf '%s\n' 'max restarts must be a non-negative integer' >&2; exit 2; }
 is_uint "$EVAL_LIMIT" || { printf '%s\n' 'eval limit must be a non-negative integer' >&2; exit 2; }
 is_lr() {
@@ -168,6 +177,9 @@ if [ "$DRY_RUN" -eq 1 ]; then
     fi
     if [ "${PROBE_EVERY:-$CHECKPOINT_EVERY}" -gt 0 ]; then
       printf 'WOULD_PASS --probe-every %s --probe-size 256\n' "${PROBE_EVERY:-$CHECKPOINT_EVERY}"
+    fi
+    if [ -n "$N_SYNTH_HARD" ]; then
+      printf 'WOULD_PASS --n-synth-hard %s\n' "$N_SYNTH_HARD"
     fi
   if [ "$RUN_EVAL" -eq 1 ]; then
     printf 'WOULD_RUN uv run python scripts/eval_checkpoint.py --checkpoint %s/phase_a.pt --data-dir data/banking77 --batch-size %s --limit %s --device %s\n' "$ARTIFACT_DIR" "$BATCH_SIZE" "$EVAL_LIMIT" "$DEVICE"
@@ -287,6 +299,9 @@ free_disk_gb() {
 }
 
 preflight() {
+  # preflight quick: static prerequisites only (uv, HF_HOME, data, import).
+  # Use before a long delay sleep; the full resource + idle gating happens
+  # in the post-delay preflight, when the machine is actually about to train.
   if ! command -v uv >/dev/null 2>&1; then
     fail_hard "uv not found on PATH"
   fi
@@ -298,6 +313,10 @@ preflight() {
   fi
   if ! uv run python -c "import nirnay, nirnay.train, nirnay.server" >/dev/null 2>&1; then
     fail_hard "nirnay import preflight failed"
+  fi
+  if [ "${1:-}" = "quick" ]; then
+    log "Preflight quick ok (static checks only; resources gated post-delay)"
+    return 0
   fi
 
   local waited=0
@@ -510,6 +529,9 @@ phase_a_command() {
   if [ "${PROBE_EVERY:-$CHECKPOINT_EVERY}" -gt 0 ]; then
     args+=(--probe-every "${PROBE_EVERY:-$CHECKPOINT_EVERY}" --probe-size 256)
   fi
+  if [ -n "$N_SYNTH_HARD" ]; then
+    args+=(--n-synth-hard "$N_SYNTH_HARD")
+  fi
   if [ -f "$CHECKPOINT" ]; then
     args+=(--resume)
   fi
@@ -635,7 +657,7 @@ run_phase_b() {
 
 acquire_lock
 trap on_exit EXIT INT TERM
-preflight
+preflight quick
 write_state "waiting delay_seconds=$DELAY_SECONDS"
 log "Supervisor started; waiting ${DELAY_SECONDS}s"
 if [ "$DELAY_SECONDS" -gt 0 ]; then
