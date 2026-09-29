@@ -339,13 +339,22 @@ def build_phase_a_mix(
     banking_limit: int | None = None,
     seed: int = 13,
     banking_splits: tuple[str, ...] = ("train",),
+    n_synth_hard: int = 0,
 ) -> list[DecisionExample]:
     """§2 mix available locally: synthetic policies (+ Banking77 if cached).
 
     Training uses the train split only by default — test.csv is eval-only
     (a Phase A run leaked it via the old both-splits default; fixed 2026-09-25).
+
+    n_synth_hard adds JevBench-style hard-reasoning items (policy/probability/
+    temporal/legal/fact-presence, ground truth by construction; see
+    data_synth_hard). Default 0 keeps the legacy mix bit-identical.
     """
     examples = synthetic_policy_examples(n=n_synth, seed=seed)
+    if n_synth_hard > 0:
+        from .data_synth_hard import synthetic_hard_examples
+
+        examples.extend(synthetic_hard_examples(n=n_synth_hard, seed=seed))
     if banking_cache is not None and Path(banking_cache).exists():
         p = Path(banking_cache)
         if p.is_dir():

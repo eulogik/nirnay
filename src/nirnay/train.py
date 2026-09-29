@@ -864,6 +864,7 @@ def run_phase_a(
     steps: int = 3,
     batch_size: int = 8,
     n_synth: int = 32,
+    n_synth_hard: int = 0,
     banking_dir: str | None = None,
     banking_limit: int | None = None,
     out_dir: str = "artifacts/phase_a",
@@ -922,6 +923,7 @@ def run_phase_a(
         banking_cache=banking_dir,
         banking_limit=banking_limit,
         seed=seed,
+        n_synth_hard=n_synth_hard,
     )
     train_ex, held_ex = split_train_heldout(mix, heldout_frac=0.2, seed=seed)
     write_freeze_manifest(out / "freeze_manifest.json", mix)
@@ -1150,6 +1152,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--steps", type=int, default=3)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--n-synth", type=int, default=32)
+    ap.add_argument("--n-synth-hard", type=int, default=0)
     ap.add_argument("--banking-dir", default="data/banking77")
     ap.add_argument("--banking-limit", type=int, default=None)
     ap.add_argument("--out-dir", default="artifacts/phase_a")
@@ -1204,6 +1207,7 @@ def main(argv: list[str] | None = None) -> int:
                 steps=args.steps,
                 batch_size=args.batch_size,
                 n_synth=args.n_synth,
+                n_synth_hard=args.n_synth_hard,
                 banking_dir=args.banking_dir if Path(args.banking_dir).exists() else None,
                 banking_limit=args.banking_limit,
                 out_dir=args.out_dir,
@@ -1240,6 +1244,7 @@ def main(argv: list[str] | None = None) -> int:
         steps=args.steps,
         batch_size=args.batch_size,
         n_synth=args.n_synth,
+        n_synth_hard=args.n_synth_hard,
         banking_dir=args.banking_dir if Path(args.banking_dir).exists() else None,
         banking_limit=args.banking_limit,
         out_dir=args.out_dir.replace("phase_a", "phase_b")
@@ -1266,6 +1271,7 @@ def run_phase_b(
     steps: int = 3,
     batch_size: int = 8,
     n_synth: int = 32,
+    n_synth_hard: int = 0,
     banking_dir: str | None = None,
     banking_limit: int | None = None,
     out_dir: str = "artifacts/phase_b",
@@ -1295,6 +1301,7 @@ def run_phase_b(
         banking_cache=banking_dir,
         banking_limit=banking_limit,
         seed=seed,
+        n_synth_hard=n_synth_hard,
     )
     train_ex, held_ex = split_train_heldout(mix, heldout_frac=0.2, seed=seed)
     write_freeze_manifest(out / "freeze_manifest.json", mix)
