@@ -12,7 +12,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G2: Laya checkpoint loads and one forward pass yields valid probability distributions (each choice/score dist sums to 1±0.01, all p in [0,1], noul in [0,1]) for a multi-question request
   CHECK: uv run python scripts/check_forward.py
   EXPECT: FORWARD_OK distributions=valid
-  EVIDENCE: automatic-evidence=v1; definition-sha256=a0f1b75cfd3a38fea6562b3f864471a2b012728df388bc685992bf78300e14b1; exit=0; EXPECT=matched; output-sha256=1f26a11097517c0eb29480f79339b73a7286b44666158f50192be1c8a2bd653f; output-bytes=467; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=a0f1b75cfd3a38fea6562b3f864471a2b012728df388bc685992bf78300e14b1; exit=0; EXPECT=matched; output-sha256=382cbdc3ca5ad115ee734c90f64c3134670a3e1d5e0e545ef5d70c723bfa6f73; output-bytes=610; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G3: Byte path produces patches that feed the encoder (byte tensor → conv patches → encoder input_ids path exercised end-to-end)
   CHECK: uv run python scripts/check_byte_path.py
@@ -27,7 +27,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G5: Jev-compatible server answers POST /v1/systemone with schema-valid answers for noul/choice/score (typesafe adapter field names: answers.decision.{noul|choice|probabilities})
   CHECK: uv run python scripts/check_server_schema.py
   EXPECT: SERVER_SCHEMA_OK
-  EVIDENCE: automatic-evidence=v1; definition-sha256=7e34a3fd33b3f74f74539e59aabb04c1e7f86d143e930d83bfc96cdb44f44041; exit=0; EXPECT=matched; output-sha256=b7898f745fdd418c0d5384e9f4c2257c96b0e91abebf339746922a542a382d69; output-bytes=670; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=7e34a3fd33b3f74f74539e59aabb04c1e7f86d143e930d83bfc96cdb44f44041; exit=0; EXPECT=matched; output-sha256=189ae9211b7aea51f3e4e47c76dbcf6a2760be221b40f188269286f668ecf89b; output-bytes=813; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G6: Per-(type, option-count) temperature refit script runs on held-out logits and writes temperature_by_options.json with finite temps in [0.5, 5.0]
   CHECK: uv run python scripts/check_temps_refit.py
@@ -37,7 +37,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G7: JevBench public suite (datasets/public) run against local server reports accuracy and schema validity without harness errors
   CHECK: uv run python scripts/check_jevbench_public.py
   EXPECT: JEVbench_PUBLIC_OK schema_validity=
-  EVIDENCE: automatic-evidence=v1; definition-sha256=bf8bed61f6611b6e8cb82a2e88246f9ae28cce962fe81cfb8c3a7f9b2462a058; exit=0; EXPECT=matched; output-sha256=09319cce8fe2c59d1175bcb7ed864dfb964370dba00a5d4a44a36edb748c2790; output-bytes=723; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=bf8bed61f6611b6e8cb82a2e88246f9ae28cce962fe81cfb8c3a7f9b2462a058; exit=0; EXPECT=matched; output-sha256=2b5e9fddc03c188ea7b82c8f31aa00eba86c77f1173de50e173e96815913670a; output-bytes=866; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G8: Concept bottleneck + MoME module: product-VQ codes land in [0, 32), slot gate rows sum to 1, NCP/VQ loss finite and >0, forward output shape matches hidden size, module params within the 17M concept/MoME budget
   CHECK: uv run python scripts/check_concepts.py
@@ -52,7 +52,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G10: RLCD++ loss suite: Brier reward in [0, 1], decision-token CE is one-hot when correct / uniform when wrong, REINFORCE group-mean advantages average ~0 within each group, combined loss finite
   CHECK: uv run python scripts/check_rlcd.py
   EXPECT: RLCD_OK
-  EVIDENCE: automatic-evidence=v1; definition-sha256=37e13cb258d3a03c21ad9d00311fef96603f6753bf116698d91699c2ee280b1d; exit=0; EXPECT=matched; output-sha256=e8a9140b1eff49c676eff5d6a01757783747a4be7a3aeb0ae111b5138a3c7c07; output-bytes=129; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=37e13cb258d3a03c21ad9d00311fef96603f6753bf116698d91699c2ee280b1d; exit=0; EXPECT=matched; output-sha256=24e4f58c4b5c3bf63caf50ec4259feaaaad807d8ce2806973550e4fb1972365e; output-bytes=146; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G11: 2-stage coarse-to-fine scorer: stage-1 top-k retrieval includes the gold label for every fixture query, stage-2 choice distribution is valid (sums to 1, peaks at gold on separable fixtures), k defaults to ≤20 per plan §1
   CHECK: uv run python scripts/check_coarse_to_fine.py
@@ -77,7 +77,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G15: Phase A SFT smoke on Laya backbone: encoder base weights frozen, LoRA + concept/deepsup trainable, plan loss backward+step succeeds for ≥3 steps with finite loss, deepsup grads present at layers 4/8/12, NCP loss in graph
   CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_smoke.py
   EXPECT: PHASE_A_OK
-  EVIDENCE: automatic-evidence=v1; definition-sha256=4df6139e56ab59cc418c017138dbf52c0cfb1d11af29491dc5a65d0369812d11; exit=0; EXPECT=matched; output-sha256=17d8e03b71457acaf443b0d10f5b9d3b8c04bfb7404be5008fb8ba11b517cfd3; output-bytes=522; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=4df6139e56ab59cc418c017138dbf52c0cfb1d11af29491dc5a65d0369812d11; exit=0; EXPECT=matched; output-sha256=5d480a2b3ff449bd82b86be7d73442fa6822621758c058093383257e44dd0bd2; output-bytes=801; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G16: Real Banking77 corpus lands as §2 training data: ≥10000 examples, all 77 official intents present, stable content hashes, 80/20 split with zero id overlap, no Jev-derived fields
   CHECK: uv run python scripts/check_banking77_data.py
@@ -87,12 +87,12 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G17: Phase A CLI runs end-to-end on the local mix: writes freeze manifest, finite loss history JSON, and a trainable-state checkpoint; encoder base remains frozen
   CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_cli.py
   EXPECT: PHASE_A_CLI_OK
-  EVIDENCE: automatic-evidence=v1; definition-sha256=6363a34005524df14a44b5e4dff6a26a8c2a784bb7871beb47259666e1648486; exit=0; EXPECT=matched; output-sha256=d3507496b31098ae1b5c431293306edb06812feb45e0f93c4b5975ecf5a2dd50; output-bytes=664; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=6363a34005524df14a44b5e4dff6a26a8c2a784bb7871beb47259666e1648486; exit=0; EXPECT=matched; output-sha256=ea79001c55840c4370aa017f52221e7d1bd9b98ce7f5d4bfebaedac554610b34; output-bytes=877; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G18: Phase B RLCD smoke: Gaussian logit noise sampling, group-mean advantages sum ~0 per group, Brier+correctness rewards in [0,1], policy loss finite over ≥3 steps
   CHECK: uv run python scripts/check_phase_b_rlcd.py
   EXPECT: PHASE_B_OK
-  EVIDENCE: automatic-evidence=v1; definition-sha256=a5dfa6aaaa35e7cccc4c28fbd33c0cfcee4c4a2b7a2ebe450d7cddbce65416e9; exit=0; EXPECT=matched; output-sha256=08d1761ac46fe44a9c93181e88582102e622be1780e7b6cc926f3b05d697637d; output-bytes=489; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=a5dfa6aaaa35e7cccc4c28fbd33c0cfcee4c4a2b7a2ebe450d7cddbce65416e9; exit=0; EXPECT=matched; output-sha256=17c38a7b6ba1f790423f1ad68849cc09e6855fb56106ca62e2a86eb99d1642ba; output-bytes=506; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 
 - [x] G19: Held-out eval reports accuracy, Brier, raw ECE, and fitted ECE together (never fitted-only) on a non-empty batch with finite metrics
   CHECK: HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_eval_ece.py

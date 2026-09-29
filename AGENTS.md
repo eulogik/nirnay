@@ -2,7 +2,8 @@
 
 ## Repo status
 
-- Scaffolded for plan §5 Days 1–14 + Days 15–35 (entry + training stack): Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine + data/lora/losses/train/eval), gate scripts `scripts/check_*.py` (G1–G19), `GATES.md` (**19/19 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
+- Scaffolded for plan §5 Days 1–14 + Days 15–35 (entry + training stack): Python package `src/nirnay/**` (incl. concepts/deepsup/rlcd/coarse2fine + data/lora/losses/train/eval), gate scripts `scripts/check_*.py` (G1–G19 plus stabilization checks), `GATES.md` (**19/19 met** with automatic evidence), `pyproject.toml` + `uv.lock`. Train/serve stabilization now loads trainable checkpoints into `NirnayAgent`, applies the same NoPE fraction in training/serving, conditions the encoder on byte patches, uses c2f for 77-way Banking77, and persists resumable Phase A checkpoints. Git `main` → private **https://github.com/eulogik/nirnay** (root commit 1047a72; push with `git push origin main`). No lint/typecheck/CI yet — do not invent them.
+- **Phase A v1 (2026-09-24) failed eval at exactly 1/77; diagnosis + fixes landed 2026-09-25** (see MEMORY.md "Phase A v1 failure" + "Fixes landed"): dense-scorer top-20 stage-1, fused pointer, eval no-forcing, seeded shuffle, train-only mix, identity-at-init byte/concepts. Second-round fixes (2026-09-25 evening, same file): byte LayerNorm-before-projection, **concepts delta LayerNorm removed (post-zero-init LN amplification caused eval cliff at steps 6–9)**, **three-group optimizer `--pretrained-lr 1e-5 --concepts-lr 1e-4` (pretrained diffusion + VQ spike 22 at step150 caused second cliff 100–150)**; combo 250-verify: dense 0.5195 / top20 0.9156 / delivered 0.5195 (baselines 0.1429/0.5844/0.1461). Our own Banking77 zero-shot baselines: dense_acc 0.1429, top20 recall 0.5844 (plan's cited "Laya 0.425" not reproducible under our template — report our own numbers). Heavy compute (training/MPS) requires asking the user first.
 - Banking77 CSVs (CC-BY-4.0, PolyAI task-specific-datasets) live in `data/banking77/{train,test}.csv` — tracked; do not delete.
 - `MEMORY.md` holds session state, verified facts, and open risks. Read it before starting work.
 
@@ -52,11 +53,29 @@ uv run python scripts/check_banking77_data.py # G16
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_phase_a_cli.py # G17
 uv run python scripts/check_phase_b_rlcd.py   # G18
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 uv run python scripts/check_eval_ece.py # G19
+uv run python scripts/check_training_contract.py  # train/serve wiring
+uv run python scripts/check_training_durability.py # checkpoint/resume
 
-# Phase A/B training CLI
+# Phase A/B training CLI (device: auto|mps|cpu|cuda; use batch 4 on the 16GB M4)
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
-  uv run python -m nirnay.train --phase a --steps 100 --batch-size 8 --out-dir artifacts/phase_a
-uv run python -m nirnay.train --phase b --steps 50 --out-dir artifacts/phase_a
+  uv run python -m nirnay.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
+    --banking-dir data/banking77 --out-dir artifacts/phase_a --lora-rank 8 --lr 0.0005 \
+    --pretrained-lr 1e-5 --concepts-lr 1e-4 --checkpoint-every 250 \
+    --probe-every 250 --probe-size 256 --device mps
+# --probe-every>0 enables the safety net (heldout probe + phase_a_best.pt +
+# collapse abort; see train.py PROBE_* constants). Always pass it on long runs.
+# Resume an interrupted run explicitly; never overwrite an existing checkpoint by accident.
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
+  uv run python -m nirnay.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
+    --banking-dir data/banking77 --out-dir artifacts/phase_a --lora-rank 8 --lr 0.0005 \
+    --checkpoint-every 250 --resume --device mps
+HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
+  uv run python -m nirnay.train --phase b --steps 50 --out-dir artifacts/phase_a --device mps
+# Do not start training unless the user says to (compute may be reserved).
+# Delayed supervisor (scheduled 2026-09-24 16:52 +0530, wake ≈19:52; E2E-proven)
+# Dry-run first; it resumes checkpoints and never overwrites one.
+bash scripts/run_delayed_training.sh --dry-run --delay-minutes 1
+# Real schedule used nohup+caffeinate with --delay-seconds 10800; Phase B opt-in only via --with-phase-b.
 ```
 
 Gate ledger:
