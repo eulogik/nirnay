@@ -1,31 +1,31 @@
-"""NoPE head-masking (v1: mask only; full GLA split is v1.1).
-
-Plan §1: "v1: NoPE masking on 1/3 global-retrieval heads (local heads keep
-Laya RoPE as-is)".
-
-ModernBERT (transformers 5.x) applies RoPE via
-`apply_rotary_pos_emb(q, k, cos, sin)` where cos/sin are [B, L, D] and are
-unsqueezed to broadcast across all heads. To give the first `nope_fraction`
-of heads identity rotation (NoPE) while local heads keep RoPE, we patch
-`apply_rotary_pos_emb` in the modernbert modeling module to expand cos/sin
-per-head and neutralize the NoPE slice. No parameters are added or removed.
-"""
+"""NoPE head-masking for the v1 Laya fork."""
 
 from __future__ import annotations
+
+import threading
+from contextlib import contextmanager
+from typing import Iterator
 
 import torch
 import torch.nn as nn
 
 
+_NOPE_STATE = threading.local()
+_ORIGINAL_ROTARY = None
+_ROTARY_PATCHED = False
+
+
 def split_head_range(num_heads: int, nope_fraction: float = 1.0 / 3.0) -> tuple[int, int]:
-    """(nope_end, local_start): heads [0, nope_end) are NoPE; rest keep RoPE."""
     if num_heads < 1:
         raise ValueError("num_heads must be >= 1")
+    if not 0.0 <= nope_fraction <= 1.0:
+        raise ValueError("nope_fraction must be in [0, 1]")
+    if nope_fraction == 0.0:
+        return 0, 0
     if num_heads == 1:
         return 1, 1
     nope_end = max(1, int(round(num_heads * nope_fraction)))
-    nope_end = min(nope_end, num_heads - 1)
-    return nope_end, nope_end
+    return min(nope_end, num_heads), min(nope_end, num_heads)
 
 
 def _rotate_half(x: torch.Tensor) -> torch.Tensor:
@@ -34,8 +34,11 @@ def _rotate_half(x: torch.Tensor) -> torch.Tensor:
     return torch.cat((-x2, x1), dim=-1)
 
 
-def _make_nope_apply(nope_end: int, num_heads: int):
+def _make_nope_apply():
     def apply_rotary_pos_emb_nope(q, k, cos, sin, unsqueeze_dim=1):
+        active_end = getattr(_NOPE_STATE, "nope_end", None)
+        if active_end is None or active_end <= 0:
+            return _ORIGINAL_ROTARY(q, k, cos, sin, unsqueeze_dim)
         original_dtype = q.dtype
         cos = cos.unsqueeze(unsqueeze_dim)
         sin = sin.unsqueeze(unsqueeze_dim)
@@ -43,7 +46,7 @@ def _make_nope_apply(nope_end: int, num_heads: int):
         if cos.size(1) == 1 and H > 1:
             cos = cos.expand(cos.size(0), H, cos.size(2), cos.size(3)).clone()
             sin = sin.expand(sin.size(0), H, sin.size(2), sin.size(3)).clone()
-            end = min(nope_end, H)
+            end = min(active_end, H)
             cos[:, :end] = 1.0
             sin[:, :end] = 0.0
         q_embed = (q.float() * cos) + (_rotate_half(q.float()) * sin)
@@ -53,26 +56,47 @@ def _make_nope_apply(nope_end: int, num_heads: int):
     return apply_rotary_pos_emb_nope
 
 
+def _install_rotation_patch() -> None:
+    global _ORIGINAL_ROTARY, _ROTARY_PATCHED
+    if _ROTARY_PATCHED:
+        return
+    import transformers.models.modernbert.modeling_modernbert as mb
+
+    _ORIGINAL_ROTARY = mb.apply_rotary_pos_emb
+    mb.apply_rotary_pos_emb = _make_nope_apply()
+    _ROTARY_PATCHED = True
+
+
+@contextmanager
+def nope_context(nope_end: int) -> Iterator[None]:
+    previous = getattr(_NOPE_STATE, "nope_end", None)
+    _NOPE_STATE.nope_end = int(nope_end)
+    try:
+        yield
+    finally:
+        if previous is None:
+            try:
+                delattr(_NOPE_STATE, "nope_end")
+            except AttributeError:
+                pass
+        else:
+            _NOPE_STATE.nope_end = previous
+
+
 def param_count(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters())
 
 
 def apply_nope_mask(encoder: nn.Module, nope_fraction: float = 1.0 / 3.0) -> dict:
-    """Apply NoPE head-masking to a ModernBERT encoder in-place.
-
-    Returns a report dict. `params_unchanged` is True iff param count before
-    == after (mask adds no parameters).
-    """
     before = param_count(encoder)
-
     num_heads = None
     if hasattr(encoder, "config") and hasattr(encoder.config, "num_attention_heads"):
         num_heads = int(encoder.config.num_attention_heads)
     if num_heads is None:
-        for m in encoder.modules():
-            nh = getattr(m, "num_heads", None)
-            if isinstance(nh, int) and nh > 0:
-                num_heads = nh
+        for module in encoder.modules():
+            candidate = getattr(module, "num_heads", None)
+            if isinstance(candidate, int) and candidate > 0:
+                num_heads = candidate
                 break
 
     report = {
@@ -85,19 +109,55 @@ def apply_nope_mask(encoder: nn.Module, nope_fraction: float = 1.0 / 3.0) -> dic
     if num_heads is None:
         report["params_unchanged"] = param_count(encoder) == before
         return report
-
     nope_end, _ = split_head_range(num_heads, nope_fraction)
     report["nope_end"] = nope_end
+    old_handles = getattr(encoder, "_nirnay_nope_handles", [])
+    for handle in old_handles:
+        handle.remove()
 
-    try:
-        import transformers.models.modernbert.modeling_modernbert as mb
+    if nope_end > 0:
+        try:
+            _install_rotation_patch()
 
-        mb.apply_rotary_pos_emb = _make_nope_apply(nope_end, num_heads)  # type: ignore[assignment]
-        report["masked"] = True
-        report["method"] = "patch_modernbert_apply_rotary_pos_emb"
-    except Exception as e:  # noqa: BLE001
-        report["method"] = f"failed:{type(e).__name__}"
-        report["error"] = str(e)[:200]
+            def pre_hook(_module, _args):
+                stack = getattr(_NOPE_STATE, "stack", [])
+                previous = getattr(_NOPE_STATE, "nope_end", None)
+                stack.append((previous, nope_end))
+                _NOPE_STATE.stack = stack
+                _NOPE_STATE.nope_end = nope_end
+
+            def post_hook(_module, _args, _output):
+                stack = getattr(_NOPE_STATE, "stack", [])
+                if stack:
+                    previous, _ = stack.pop()
+                    if previous is None:
+                        try:
+                            delattr(_NOPE_STATE, "nope_end")
+                        except AttributeError:
+                            pass
+                    else:
+                        _NOPE_STATE.nope_end = previous
+                if stack:
+                    _NOPE_STATE.stack = stack
+                else:
+                    try:
+                        delattr(_NOPE_STATE, "stack")
+                    except AttributeError:
+                        pass
+
+            handles = [
+                encoder.register_forward_pre_hook(pre_hook),
+                encoder.register_forward_hook(post_hook),
+            ]
+            setattr(encoder, "_nirnay_nope_handles", handles)
+            report["masked"] = True
+            report["method"] = "patch_modernbert_apply_rotary_pos_emb"
+        except Exception as error:
+            report["method"] = f"failed:{type(error).__name__}"
+            report["error"] = str(error)[:200]
+    else:
+        setattr(encoder, "_nirnay_nope_handles", [])
+        report["method"] = "disabled"
 
     after = param_count(encoder)
     report["params_unchanged"] = after == before

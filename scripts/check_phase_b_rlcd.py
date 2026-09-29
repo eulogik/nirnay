@@ -17,7 +17,12 @@ def main() -> int:
     import torch
 
     from nirnay.data import build_phase_a_mix, split_train_heldout
-    from nirnay.rlcd import brier_reward, group_mean_advantages, rlcd_sample_reward
+    from nirnay.rlcd import (
+        brier_reward,
+        group_mean_advantages,
+        policy_gradient_loss,
+        rlcd_sample_reward,
+    )
     from nirnay.train import (
         NirnayTrainModel,
         PhaseBRLCD,
@@ -54,7 +59,7 @@ def main() -> int:
         os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya"),
         device="cpu",
         enable_byte_path=False,
-        nope_fraction=0.0,
+        nope_fraction=1.0 / 3.0,
     )
     model = NirnayTrainModel(
         agent.model,
@@ -63,6 +68,7 @@ def main() -> int:
         use_concepts=True,
         use_deepsup=True,
         use_c2f=True,
+        use_byte_path=True,
     )
     mix = build_phase_a_mix(n_synth=24, banking_cache="data/banking77", banking_limit=24)
     train_ex, _ = split_train_heldout(mix, heldout_frac=0.2, seed=13)
@@ -88,6 +94,15 @@ def main() -> int:
         print(f"PHASE_B_FAIL adv_mean={adv_means}", file=sys.stderr)
         return 1
 
+    policy_probe = torch.randn(8, 5, requires_grad=True)
+    policy_actions = torch.randint(0, 5, (8,))
+    policy_adv = torch.randn(8)
+    policy = policy_gradient_loss(policy_probe, policy_actions, policy_adv)
+    policy.backward()
+    if policy_probe.grad is None or float(policy_probe.grad.abs().sum()) <= 0.0:
+        print("PHASE_B_FAIL policy_grad", file=sys.stderr)
+        return 1
+
     # Noise sampling: action within valid marker support
     out = model(batch)
     action, noisy_p = trainer.sample_action(out["logits"], batch["marker_mask"])
@@ -102,7 +117,7 @@ def main() -> int:
     print(
         f"PHASE_B_OK steps=3 loss0={losses[0]:.4f} lossN={losses[-1]:.4f} "
         f"reward_range=[{min(rewards):.3f},{max(rewards):.3f}] "
-        f"adv_mean~0 group_baseline=true noise_std=0.1"
+        f"adv_mean~0 group_baseline=true noise_std=0.1 policy_grad=true"
     )
     return 0
 

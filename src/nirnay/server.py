@@ -41,11 +41,16 @@ def get_agent() -> NirnayAgent:
         path = os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya")
         device = os.environ.get("NIRNAY_DEVICE")  # None → auto
         temps = os.environ.get("NIRNAY_TEMPS")
+        checkpoint = os.environ.get("NIRNAY_CHECKPOINT")
+        lora_rank = int(os.environ.get("NIRNAY_LORA_RANK", "8"))
         _agent = NirnayAgent(
             path,
             device=device,
             temps_path=temps or None,
+            checkpoint_path=checkpoint or None,
+            lora_rank=lora_rank,
         )
+
     return _agent
 
 

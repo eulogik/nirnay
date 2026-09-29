@@ -22,12 +22,20 @@ def main() -> int:
     # Minimal base: load Laya agent's DecisionModel
     from nirnay import load as load_agent
 
-    agent = load_agent(agent_path, device="cpu", enable_byte_path=False, nope_fraction=0.0)
+    agent = load_agent(agent_path, device="cpu", enable_byte_path=False, nope_fraction=1.0 / 3.0)
     base = agent.model
     tok = agent.tok
 
-    model = NirnayTrainModel(base, use_lora=True, lora_rank=4, use_concepts=True,
-                              use_deepsup=True, use_c2f=True, n_labels_bank=77)
+    model = NirnayTrainModel(
+        base,
+        use_lora=True,
+        lora_rank=4,
+        use_concepts=True,
+        use_deepsup=True,
+        use_c2f=True,
+        use_byte_path=True,
+        n_labels_bank=77,
+    )
     summary = model.trainable_summary()
     if summary["lora_wrapped"] < 1:
         print(f"PHASE_A_FAIL lora_wrapped=0 summary={summary}", file=sys.stderr)
@@ -56,12 +64,16 @@ def main() -> int:
         return 1
 
     # Build small batch from synthetic mix
-    mix = build_phase_a_mix(n_synth=24, seed=3)
+    mix = build_phase_a_mix(
+        n_synth=24, banking_cache="data/banking77", banking_limit=4, seed=3
+    )
     train_ex, _ = split_train_heldout(mix, heldout_frac=0.2, seed=13)
-    # Prefer multi-type batch
-    items = encode_examples(train_ex[:12], tok)
-    # Banking77-style label space for choice is local index 0..3 in synth criteria —
-    # encode_examples already handles via keys.index.
+    items = encode_examples(train_ex, tok, max_len=512, head_max_len=192)
+    banking_items = [item for item in items if item["c2f_eligible"]]
+    if not banking_items:
+        print("PHASE_A_FAIL no_c2f_fixture", file=sys.stderr)
+        return 1
+    items = items[:10] + banking_items[:1]
     batch = collate_examples(items, tok.pad_token_id)
     batch = {k: v.to(device) if torch.is_tensor(v) else v for k, v in batch.items()}
 
@@ -114,6 +126,30 @@ def main() -> int:
             print("PHASE_A_FAIL deep_nan", file=sys.stderr)
             return 1
 
+    if model.byte_fusion is None or model.c2f is None:
+        print("PHASE_A_FAIL active_modules_missing", file=sys.stderr)
+        return 1
+    c2f_grad = any(
+        p.grad is not None and p.grad.abs().sum() > 0
+        for p in model.c2f.parameters()
+    )
+    byte_grad = any(
+        p.grad is not None and p.grad.abs().sum() > 0
+        for p in model.byte_fusion.parameters()
+    )
+    if not c2f_grad or not byte_grad:
+        print(
+            f"PHASE_A_FAIL c2f_grad={c2f_grad} byte_grad={byte_grad}",
+            file=sys.stderr,
+        )
+        return 1
+    if not all(not p.requires_grad for p in model.base.act_head.parameters()):
+        print("PHASE_A_FAIL act_head_trainable_without_targets", file=sys.stderr)
+        return 1
+    if abs(history[-1]["deep_weighted"] - 0.2 * history[-1]["deep"]) > 1e-5:
+        print("PHASE_A_FAIL deep_weighting", file=sys.stderr)
+        return 1
+
     # Concepts params must have changed (optimizer stepped them)
     c_changed = False
     for p in model.concepts.parameters():
@@ -136,6 +172,8 @@ def main() -> int:
         f"PHASE_A_OK steps=3 loss0={losses[0]:.4f} lossN={losses[-1]:.4f} "
         f"lora_wrapped={summary['lora_wrapped']} trainable={lora_n} "
         f"encoder_frozen=true concept_grad={concept_grad} "
+        f"wired=true byte_grad={byte_grad} c2f_grad={c2f_grad} "
+        f"act_head_frozen=true deep_weighted={history[-1]['deep_weighted']:.4f} "
         f"captured={sorted(model._captured) if model._captured else 'cleared'}"
     )
     return 0

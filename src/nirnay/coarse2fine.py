@@ -1,8 +1,10 @@
 """2-stage coarse-to-fine choice scoring (plan §1 item 3; Banking77 path).
 
-Stage 1: pico-coarse retrieve top-k candidates (default k=20) from the full
-label bank (77+ options). Stage 2: pointer softmax over the retrieved set
-only — fixes the 192–256 tok head budget collapse Laya showed at 77-way.
+Stage 1: retrieve top-k candidates (default k=20) from the full label bank
+(77+ options) — cosine bank retrieval by default; the training path passes
+dense [MASK]-scorer top-k as `candidates` instead (stronger zero-shot prior,
+trained through `logit_bias`). Stage 2: pointer softmax over the retrieved
+set only — fixes the 192–256 tok head budget collapse Laya showed at 77-way.
 """
 
 from __future__ import annotations
@@ -32,14 +34,19 @@ def stage1_retrieve(
 def stage2_pointer(
     query: torch.Tensor,
     candidates: torch.Tensor,
+    logit_bias: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Pointer distribution over retrieved candidates.
 
     query: [B, D], candidates: [B, K, D] → probs [B, K] (sums to 1).
+    logit_bias: optional [B, K] additive scores (e.g. [MASK]-scorer logits)
+    fused with the cosine similarity.
     """
     q = F.normalize(query, dim=-1)
     c = F.normalize(candidates, dim=-1)
     scores = torch.einsum("bd,bkd->bk", q, c)
+    if logit_bias is not None:
+        scores = scores + logit_bias
     return F.softmax(scores, dim=-1)
 
 
@@ -60,20 +67,35 @@ class CoarseToFine(nn.Module):
         return self.label_embed.weight
 
     def forward(
-        self, query: torch.Tensor, gold_idx: torch.Tensor | None = None
+        self,
+        query: torch.Tensor,
+        gold_idx: torch.Tensor | None = None,
+        *,
+        candidates: torch.Tensor | None = None,
+        logit_bias: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
         """query: [B, H]. Returns cand_indices [B, k], probs [B, k],
         full_probs [B, N] (zeros outside candidates). If gold_idx given,
         includes gold in candidates (teacher-forcing retrieve for training).
+
+        candidates: optional precomputed [B, k] indices (train path passes the
+        dense [MASK]-scorer top-k here — differentiably trained via logit_bias;
+        default None keeps the cosine stage-1 retrieval). logit_bias: optional
+        [B, k] scorer logits fused into the pointer score.
         """
-        cand = stage1_retrieve(query, self.bank, k=self.top_k)
+        if candidates is None:
+            cand = stage1_retrieve(query, self.bank, k=self.top_k)
+        else:
+            cand = candidates
         if gold_idx is not None:
             gold = gold_idx.view(-1, 1)
             # Ensure gold present: replace last slot when missing.
             present = (cand == gold).any(dim=-1, keepdim=True)
             cand = torch.where(present, cand, torch.cat([cand[:, :-1], gold], dim=-1))
         candidates = self.label_embed(cand)  # [B, K, H]
-        probs = stage2_pointer(query, candidates)
-        full = torch.zeros(query.size(0), self.num_labels, device=query.device)
-        full.scatter_(1, cand, probs)
+        probs = stage2_pointer(query, candidates, logit_bias=logit_bias)
+        full = torch.zeros(
+            query.size(0), self.num_labels, device=query.device, dtype=probs.dtype
+        )
+        full = full.scatter(1, cand, probs)
         return {"cand_indices": cand, "probs": probs, "full_probs": full}

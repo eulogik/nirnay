@@ -49,6 +49,7 @@ class DeepSupervision(nn.Module):
         self,
         hidden_by_layer: Mapping[int, torch.Tensor],
         targets: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[int, torch.Tensor]]:
         """hidden_by_layer: layer_idx → [B, L, H] (pooled by mean over L).
 
@@ -63,7 +64,11 @@ class DeepSupervision(nn.Module):
                 raise KeyError(f"missing hidden state for layer {idx}")
             h = hidden_by_layer[idx]
             if h.ndim == 3:
-                h = h.mean(dim=1)  # pool sequence → [B, H]
+                if attention_mask is None:
+                    h = h.mean(dim=1)
+                else:
+                    mask = attention_mask.to(h.dtype).unsqueeze(-1)
+                    h = (h * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1.0)
             logits = self.probes[str(idx)](h)
             per_layer[idx] = F.cross_entropy(logits, targets)
         mean_ce = torch.stack([per_layer[i] for i in self.layers]).mean()

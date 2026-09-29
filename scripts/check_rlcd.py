@@ -14,6 +14,7 @@ def main() -> int:
         group_mean_advantages,
         rlcd_sample_reward,
         rlcd_total_loss,
+        policy_gradient_loss,
     )
 
     torch.manual_seed(0)
@@ -90,9 +91,24 @@ def main() -> int:
         print(f"RLCD_FAIL group_means={adv_groups.tolist()}", file=sys.stderr)
         return 1
 
+    policy_probe = torch.randn(8, 5, requires_grad=True)
+    policy_actions = torch.randint(0, 5, (8,))
+    policy_adv = torch.randn(8)
+    policy = policy_gradient_loss(policy_probe, policy_actions, policy_adv)
+    policy.backward()
+    if policy_probe.grad is None or float(policy_probe.grad.abs().sum()) <= 0.0:
+        print("RLCD_FAIL policy_grad", file=sys.stderr)
+        return 1
+
     # --- combined loss finite ---
     choice_ce = torch.nn.functional.cross_entropy(probs.log(), targets)
-    total = rlcd_total_loss(choice_ce, ce_correct, adv)
+    total = rlcd_total_loss(
+        choice_ce,
+        ce_correct,
+        adv,
+        log_probs=torch.log(probs.clamp_min(1e-12)),
+        actions=torch.randint(0, K, (B,)),
+    )
     if total.ndim != 0 or not torch.isfinite(total):
         print(f"RLCD_FAIL total={total}", file=sys.stderr)
         return 1
@@ -100,7 +116,7 @@ def main() -> int:
     print(
         f"RLCD_OK brier_in=[0,1] perfect=1 wrong=0 "
         f"calCE_onehot_when_correct=true calCE_uniform_when_wrong=true "
-        f"group_means~0 total={float(total):.4f}"
+        f"group_means~0 policy_grad=true total={float(total):.4f}"
     )
     return 0
 

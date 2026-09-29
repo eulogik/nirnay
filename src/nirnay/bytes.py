@@ -68,7 +68,19 @@ class BytePath(nn.Module):
             in_dim = cfg.trunk_dim
         self.patch_size = cfg.patch_size
         self.to_encoder = nn.Linear(cfg.trunk_dim, cfg.encoder_hidden)
-        self.norm = nn.LayerNorm(cfg.encoder_hidden)
+        # Zero-init the encoder projection: ByteFusion is exactly identity at
+        # construction (random-init byte patches were corrupting laya's
+        # pretrained embeddings — diagnosis 2026-09-25). Gradients still reach
+        # to_encoder through the nonzero fusion scale from step 0.
+        nn.init.zeros_(self.to_encoder.weight)
+        nn.init.zeros_(self.to_encoder.bias)
+        # Normalize trunk features BEFORE the zero-init projection. A LayerNorm
+        # after the projection normalizes the tiny first optimizer step to unit
+        # variance, injecting full-strength input corruption at any learning
+        # rate (one-step bisection, 2026-09-25: byte alone crashed top20
+        # 0.5844 -> 0.2208). With norm-before-proj, injection magnitude scales
+        # with to_encoder weights (i.e. lr x steps) and starts at 0.
+        self.norm = nn.LayerNorm(cfg.trunk_dim)
 
     def forward(self, byte_ids: torch.Tensor, byte_mask: torch.Tensor | None = None) -> torch.Tensor:
         """byte_ids: [B, L] int64 in [0,255]. Returns [B, n_patches, H]."""
@@ -99,7 +111,38 @@ class BytePath(nn.Module):
             m = (m > 0).float()
             x = x * m
 
-        return self.norm(self.to_encoder(x))
+        return self.to_encoder(self.norm(x))
+
+
+class ByteFusion(nn.Module):
+    def __init__(self, config: BytePathConfig | None = None):
+        super().__init__()
+        self.config = config or BytePathConfig()
+        self.path = BytePath(self.config)
+        self.scale = nn.Parameter(torch.tensor(0.1))
+
+    def forward(
+        self,
+        token_embeddings: torch.Tensor,
+        byte_ids: torch.Tensor | None,
+        byte_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if byte_ids is None:
+            return token_embeddings
+        # No LayerNorm after path output: norm-after-projection normalizes any
+        # nonzero to_encoder output to unit variance (see BytePath.norm note).
+        patches = self.path(byte_ids, byte_mask)
+        if patches.size(1) != token_embeddings.size(1):
+            patches = nn.functional.interpolate(
+                patches.transpose(1, 2),
+                size=token_embeddings.size(1),
+                mode="linear",
+                align_corners=False,
+            ).transpose(1, 2)
+        if byte_mask is not None:
+            valid = byte_mask.to(torch.bool).any(dim=1, keepdim=True)
+            patches = patches * valid.unsqueeze(-1).to(patches.dtype)
+        return token_embeddings + self.scale * patches
 
 
 def encode_bytes(data: bytes, max_len: int = 4096, pad: int = 0) -> tuple[torch.Tensor, torch.Tensor]:

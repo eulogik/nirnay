@@ -79,14 +79,29 @@ def group_mean_advantages(rewards: torch.Tensor, group_size: int) -> torch.Tenso
     return adv.reshape_as(r)
 
 
+def policy_gradient_loss(
+    log_probs: torch.Tensor,
+    actions: torch.Tensor,
+    advantages: torch.Tensor,
+) -> torch.Tensor:
+    if log_probs.ndim != 2 or actions.ndim != 1 or advantages.ndim != 1:
+        raise ValueError("log_probs [B,K], actions [B], advantages [B] required")
+    if log_probs.size(0) != actions.numel() or advantages.numel() != actions.numel():
+        raise ValueError("policy tensors must have the same batch size")
+    selected = log_probs.gather(1, actions.view(-1, 1)).squeeze(1)
+    return -(advantages.detach() * selected).mean()
+
+
 def rlcd_total_loss(
     choice_ce: torch.Tensor,
     cal_ce: torch.Tensor,
     advantages: torch.Tensor,
+    log_probs: torch.Tensor,
+    actions: torch.Tensor,
     cal_lambda: float = CALCE_LAMBDA_DEFAULT,
 ) -> torch.Tensor:
-    """L_choiceCE + λ*L_calCE - E[advantage] (policy term maximizes reward)."""
+    """L_choiceCE + λ*L_calCE − E[A·log π(action)]."""
     if not (0.0 < cal_lambda < 1.0):
         raise ValueError("cal_lambda must be in (0, 1)")
-    policy = -advantages.mean()
+    policy = policy_gradient_loss(log_probs, actions, advantages)
     return choice_ce + cal_lambda * cal_ce + policy

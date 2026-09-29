@@ -9,7 +9,7 @@ def main() -> int:
     import torch
     from transformers import AutoConfig, AutoModel
 
-    from nirnay.nope import apply_nope_mask, param_count, split_head_range
+    from nirnay.nope import apply_nope_mask, nope_context, param_count, split_head_range
 
     # Use ModernBERT config only (no full Laya download needed for mask logic).
     cfg = AutoConfig.from_pretrained("answerdotai/ModernBERT-large")
@@ -36,7 +36,8 @@ def main() -> int:
     k = torch.randn(B, H, L, D)
     cos = torch.rand(B, L, D)
     sin = torch.rand(B, L, D)
-    q0, _ = mb.apply_rotary_pos_emb(q, k, cos, sin, unsqueeze_dim=1)
+    with nope_context(expect_end):
+        q0, _ = mb.apply_rotary_pos_emb(q, k, cos, sin, unsqueeze_dim=1)
     # Head 0 NoPE: q0[0,0] should equal q[0,0] (up to float cast path)
     head0_identity = torch.allclose(q0[0, 0], q[0, 0].float().to(q0.dtype), atol=1e-5)
     # A local head (last) should differ when sin/cos are non-trivial.

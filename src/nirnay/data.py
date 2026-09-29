@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import random
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -319,11 +320,13 @@ def load_banking77_csv(path: str | Path, split: str = "train") -> list[DecisionE
     ]
 
 
-def load_banking77_dir(root: str | Path) -> list[DecisionExample]:
-    """Load data/banking77/{train,test}.csv if present (else empty list)."""
+def load_banking77_dir(
+    root: str | Path, splits: tuple[str, ...] = ("train", "test")
+) -> list[DecisionExample]:
+    """Load data/banking77/{split}.csv for each split (else empty list)."""
     root = Path(root)
     out: list[DecisionExample] = []
-    for split in ("train", "test"):
+    for split in splits:
         p = root / f"{split}.csv"
         if p.exists():
             out.extend(load_banking77_csv(p, split=split))
@@ -335,13 +338,18 @@ def build_phase_a_mix(
     banking_cache: str | Path | None = None,
     banking_limit: int | None = None,
     seed: int = 13,
+    banking_splits: tuple[str, ...] = ("train",),
 ) -> list[DecisionExample]:
-    """§2 mix available locally: synthetic policies (+ Banking77 if cached)."""
+    """§2 mix available locally: synthetic policies (+ Banking77 if cached).
+
+    Training uses the train split only by default — test.csv is eval-only
+    (a Phase A run leaked it via the old both-splits default; fixed 2026-09-25).
+    """
     examples = synthetic_policy_examples(n=n_synth, seed=seed)
     if banking_cache is not None and Path(banking_cache).exists():
         p = Path(banking_cache)
         if p.is_dir():
-            bank = load_banking77_dir(p)
+            bank = load_banking77_dir(p, splits=banking_splits)
         else:
             bank = load_banking77_cache(p)
         examples.extend(bank[:banking_limit] if banking_limit else bank)
@@ -376,5 +384,9 @@ def write_freeze_manifest(
         "hashes": freeze_hashes(examples),
         "sources": sorted({ex.source for ex in examples}),
     }
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    os.replace(temporary, path)
     return path

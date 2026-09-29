@@ -80,6 +80,28 @@ def cal_ce(
     return -(mixed * log_probs).sum(dim=-1).mean()
 
 
+def masked_log_probs(
+    logits: torch.Tensor, marker_mask: torch.Tensor
+) -> torch.Tensor:
+    masked = logits.masked_fill(~marker_mask, -1e4)
+    return F.log_softmax(masked, dim=-1)
+
+
+def masked_cal_ce(
+    logits: torch.Tensor,
+    targets: torch.Tensor,
+    marker_mask: torch.Tensor,
+) -> torch.Tensor:
+    log_probs = masked_log_probs(logits, marker_mask)
+    K = logits.size(-1)
+    counts = marker_mask.sum(dim=-1, keepdim=True).clamp_min(1)
+    onehot = F.one_hot(targets, K).to(log_probs.dtype)
+    uniform = marker_mask.to(log_probs.dtype) / counts.to(log_probs.dtype)
+    correct = logits.masked_fill(~marker_mask, -1e4).argmax(dim=-1) == targets
+    mixed = torch.where(correct.unsqueeze(-1), onehot, uniform)
+    return -(mixed * log_probs).sum(dim=-1).mean()
+
+
 def assemble_plan_loss(
     choice_ce_t: torch.Tensor,
     rps_t: torch.Tensor,
@@ -139,44 +161,46 @@ def plan_loss_from_batch(
     qtype: 0=choice, 1=score, 2=noul (laya QTYPES).
     Missing segments contribute 0 (keeps smoke batches valid).
     """
-    device = logits.device
-    probs = F.softmax(logits.float(), dim=-1)
-    log_probs = probs.clamp_min(1e-12).log()
+    zero = logits.new_zeros(())
+    probs = F.softmax(logits.float().masked_fill(~marker_mask, -1e4), dim=-1)
+    probs = probs * marker_mask.to(probs.dtype)
+    probs = probs / probs.sum(dim=-1, keepdim=True).clamp_min(1e-12)
 
     sel_c = qtype == 0
     sel_s = qtype == 1
     sel_n = qtype == 2
+    cal_parts: list[torch.Tensor] = []
 
-    zero = logits.new_zeros(())
     if sel_c.any():
         c_logits = logits[sel_c]
         c_mask = marker_mask[sel_c]
-        c_lab = labels[sel_c]
-        # pad labels for cross_entropy against K markers: targets are option indices
-        c_ce = choice_ce(c_logits, c_lab.clamp(min=0), c_mask)
-        c_logp = log_probs[sel_c]
-        # only valid marker cols for cal — use full row (masked cols ~0 mass)
-        c_cal = cal_ce(c_logp, c_lab.clamp(min=0))
+        c_lab = labels[sel_c].clamp(min=0, max=c_logits.size(-1) - 1)
+        c_ce = choice_ce(c_logits, c_lab, c_mask)
+        cal_parts.append(masked_cal_ce(c_logits, c_lab, c_mask))
     else:
         c_ce = zero
-        c_cal = zero
 
     if sel_s.any():
         s_probs = probs[sel_s]
-        s_lab = labels[sel_s].clamp(min=0)
+        s_lab = labels[sel_s].clamp(min=0, max=s_probs.size(-1) - 1)
         rps_t = rps_loss(s_probs, s_lab)
+        cal_parts.append(masked_cal_ce(logits[sel_s], s_lab, marker_mask[sel_s]))
     else:
         rps_t = zero
 
     if sel_n.any():
         n_probs = probs[sel_n]
-        n_lab = labels[sel_n].clamp(min=0)
+        n_lab = labels[sel_n].clamp(min=0, max=n_probs.size(-1) - 1)
         noul_t = noul_bce(n_probs, n_lab)
+        cal_parts.append(masked_cal_ce(logits[sel_n], n_lab, marker_mask[sel_n]))
     else:
         noul_t = zero
 
-    rel = relational if relational is not None else zero
-    # deep/ncp are per-batch scalars from modules
+    c_cal = torch.stack(cal_parts).mean() if cal_parts else zero
+    if relational is not None:
+        rel = relational.mean() if relational.ndim else relational
+    else:
+        rel = zero
     return assemble_plan_loss(
         c_ce, rps_t, noul_t, rel, ncp, deep, c_cal, cal_lambda=cal_lambda
     )

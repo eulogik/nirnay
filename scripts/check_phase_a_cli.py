@@ -73,11 +73,58 @@ def main() -> int:
             print("PHASE_A_CLI_FAIL ckpt_keys", file=sys.stderr)
             return 1
         ckpt_bytes = ckpt.stat().st_size
+        del blob
+        import gc
+
+        gc.collect()
+        from nirnay.agent import NirnayAgent
+
+        runtime = NirnayAgent(
+            device="cpu",
+            checkpoint_path=str(ckpt),
+            enable_byte_path=False,
+        )
+        runtime_report = runtime.report()
+        if not runtime_report.get("checkpoint_loaded"):
+            print("PHASE_A_CLI_FAIL runtime_checkpoint_not_loaded", file=sys.stderr)
+            return 1
+        if not runtime_report.get("byte_fusion") or not runtime_report.get("coarse_to_fine"):
+            print(f"PHASE_A_CLI_FAIL runtime_modules={runtime_report}", file=sys.stderr)
+            return 1
+        nope_report = runtime_report.get("nope") or {}
+        if not nope_report.get("masked") or abs(
+            float(nope_report.get("nope_fraction", 0.0)) - (1.0 / 3.0)
+        ) > 1e-9:
+            print(f"PHASE_A_CLI_FAIL runtime_nope={nope_report}", file=sys.stderr)
+            return 1
+        from nirnay.data import BANKING77_LABELS
+
+        runtime_answer = runtime.system_one(
+            "The card payment was declined twice.",
+            {
+                "decision": {
+                    "type": "choice",
+                    "instructions": "Classify the banking intent.",
+                    "criteria": {
+                        label: label.replace("_", " ")
+                        for label in BANKING77_LABELS
+                    },
+                }
+            },
+        )
+        runtime_probs = runtime_answer["answers"]["decision"]["probabilities"]
+        if len(runtime_probs) != 77 or abs(sum(runtime_probs.values()) - 1.0) > 0.01:
+            print(
+                f"PHASE_A_CLI_FAIL runtime_probs={len(runtime_probs)} "
+                f"sum={sum(runtime_probs.values())}",
+                file=sys.stderr,
+            )
+            return 1
 
     print(
         f"PHASE_A_CLI_OK steps={len(history)} loss0={losses[0]:.4f} "
         f"lossN={losses[-1]:.4f} freeze_n={m['n']} ckpt_bytes={ckpt_bytes} "
-        f"encoder_frozen=true trainable={mm['trainable']}"
+        f"encoder_frozen=true trainable={mm['trainable']} runtime_loaded=true"
     )
     return 0
 
