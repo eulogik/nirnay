@@ -9,7 +9,15 @@
 
 **NIRNAY (निर्णय, "decision") is a 450M open-weight classifier for banking intent and typed decisions.** One forward pass turns a state plus a question into calibrated probabilities. No text generation, no API key, no per-call bill. Apache-2.0, built by [Eulogik](https://eulogik.com).
 
-![Banking77: NIRNAY vs Jev vs untrained, same 3,080 test cases](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/benchmark_banking77.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/hero.png" alt="NIRNAY 450M: 87.9% on Banking77, fitted ECE 0.045, Apache-2.0" width="100%" />
+</p>
+
+[Model](https://huggingface.co/eulogik/nirnay-450m) · [Code](https://github.com/eulogik/nirnay) · [Paper](https://github.com/eulogik/nirnay/blob/main/papers/nirnay/main.pdf) · [Evals](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/benchmark_banking77.png" alt="Banking77: NIRNAY vs Jev vs Julia-1 vs untrained, same 3,080 test cases" width="100%" />
+</p>
 
 Banking77 keywords for search: banking intent classification, 77-way intent classifier, intent detection model, small language model for classification, calibrated decision model, system one model, Jev alternative, Laya fine-tune, on-device text classifier, Apache 2.0 classifier.
 
@@ -23,7 +31,26 @@ Banking77 keywords for search: banking intent classification, 77-way intent clas
 | Julia-1 144M | 0.64 (their 72-label pilot, n=100, shortlist) | their card concedes grouped routing drops answers |
 | Untrained baseline | 0.143 (our template, our measurement) | fresh weights |
 
-Raw JSON: [`eval/banking77_phase_b.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json), [`eval/banking77_phase_a.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_a.json). Same test split for every row above. The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
+Raw JSON: [`eval/banking77_phase_b.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json), [`eval/banking77_phase_a.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_a.json). Same test split for every row above.
+
+> The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
+
+| Benchmark / Metric | Jev 1.13.0 | NIRNAY phase_b |
+|---|---|---|
+| Banking77 (same 3,080) | 0.803 (recorded run) | **0.8792** (fine-tuned) |
+| ECE, raw | 0.197 gap (jevals, their setup) | **0.089** (our test) |
+| Latency, 1 decision | 310 to 478 ms (API medians) | **209 ms** MPS / 361 ms CPU |
+| Weights | closed API | **Apache-2.0** |
+| Cost | per-call billing | **$0 self-hosted** |
+
+Jev figures above are third-party published, never measured here (no API access); sample sizes and prompts differ. Ours are measured in this repo.
+
+## Where Jev leads
+
+* **JevBench overall.** 72.1 vs our 0.55 public: intelligence, sealed decisions, calibration at scale. Different league, honestly stated.
+* **Long documents.** Our context caps at 512 tokens. Their API takes more.
+* **Zero setup.** Their API works with a key. Ours needs a local install plus a 466MB checkpoint download.
+* **Languages.** We trained English banking. They serve many languages out of the box.
 
 Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. Corpus latency work (ONNX) is open.
 
@@ -37,8 +64,8 @@ pip install git+https://github.com/eulogik/nirnay
 from nirnay.agent import NirnayAgent
 
 agent = NirnayAgent(device="mps", checkpoint_path="phase_b.pt", enable_byte_path=False)
-out = agent.act(
-    state="My card was charged twice for the same order.",
+out = agent.system_one(
+    "My card was charged twice for the same order.",
     questions={"intent": {
         "type": "choice",
         "instructions": "Classify the banking intent.",
@@ -48,13 +75,36 @@ out = agent.act(
 print(out["answers"]["intent"]["probabilities"])
 ```
 
+Choice, score, and yes/no ride the same call:
+
+```python
+out = agent.system_one(
+    "Ticket T-4411: outage started 02:10, still down, 40 agents idle.",
+    questions={
+        "urgency": {
+            "type": "score",
+            "instructions": "How urgent is this?",
+            "criteria": ["not urgent", "soon", "blocking"],
+        },
+        "page_oncall": {
+            "type": "noul",
+            "instructions": "Should the on-call be paged?",
+        },
+    },
+)
+print(out["answers"]["urgency"]["score"])   # expected level over the rubric
+print(out["answers"]["page_oncall"]["noul"])  # P(true)
+```
+
 The checkpoint loads with `NirnayAgent(checkpoint_path=...)`. Full eval harness: `scripts/eval_checkpoint.py`. Server: `nirnay.server` exposes `POST /v1/systemone` (Jev-compatible wire format).
 
 ## How it was trained
 
 Base is Laya 421M (Apache-2.0) plus ~30M of additions (concept bottleneck, deep supervision, coarse-to-fine pointer, byte path). 7,000 Phase A steps + 50 RLCD steps, all on one Mac. Three-group optimizer, seeded everything, hashes frozen before training.
 
-![Probe accuracy and flat NCP across all 7,000 steps](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/training_stability.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/training_stability.png" alt="Probe accuracy and flat NCP across all 7,000 steps" width="100%" />
+</p>
 
 Two training deaths taught us the fixes (both landed, both gated):
 
@@ -67,13 +117,17 @@ Plus a safety net around training itself: heldout probes every 250 steps, best-c
 
 We report raw and fitted ECE on every eval, always. Phase_b on Banking77 test:
 
-![Reliability diagram, measured on test set](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/reliability.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/reliability.png" alt="Reliability diagram, measured on test set" width="100%" />
+</p>
 
 Most mass sits above 0.9 confidence at 92% accuracy there. Per-bucket temperatures ship with the run.
 
 ## Architecture
 
-![Forward pass](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/architecture.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/architecture.png" alt="Forward pass" width="100%" />
+</p>
 
 Bytes and token ids feed a frozen Laya encoder (LoRA adapters train). A concept bottleneck (layer-normed product-VQ, 4 chunks x 32 codes, mixture-of-slots) adds a learned residual. A 2-layer head scores dense markers; a coarse-to-fine pointer re-ranks the top 20 for 77-way decisions. Per-bucket temperatures calibrate the output. Deep supervision at layers 4/8/12 and RLCD exist only at training time.
 
@@ -114,3 +168,11 @@ NIRNAY is built by [Eulogik](https://eulogik.com) ([GitHub](https://github.com/e
 ## License
 
 Apache-2.0. Laya base (ConvAI Innovations, Apache-2.0). Banking77 data (PolyAI, CC-BY-4.0).
+
+## Links
+
+- **Model:** https://huggingface.co/eulogik/nirnay-450m
+- **Code:** https://github.com/eulogik/nirnay
+- **Paper:** https://github.com/eulogik/nirnay/blob/main/papers/nirnay/main.pdf
+- **Evals:** https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json
+- **Eulogik:** https://eulogik.com (contact: info@eulogik.com)
