@@ -30,3 +30,4 @@ third_party/
 
 # local training logs
 logs/
+main.log
