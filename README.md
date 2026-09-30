@@ -1,15 +1,15 @@
 # NIRNAY 450M: a small calibrated decision model that beats Jev on Banking77
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./NIRNAY-Breakthrough-Plan.md)
-[![Params: 450M](https://img.shields.io/badge/params-450M-cyan.svg)](./src/nirnay/train.py)
-[![Banking77: 87.9%](https://img.shields.io/badge/Banking77-87.9%25-brightgreen.svg)](./eval/banking77_phase_b.json)
-[![ECE fitted: 0.045](https://img.shields.io/badge/ECE_fitted-0.045-blueviolet.svg)](./eval/banking77_phase_b.json)
-[![Gates: 19/19](https://img.shields.io/badge/gates-19%2F19-success.svg)](./GATES.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/eulogik/nirnay/blob/main/NIRNAY-Breakthrough-Plan.md)
+[![Params: 450M](https://img.shields.io/badge/params-450M-cyan.svg)](https://github.com/eulogik/nirnay/blob/main/src/nirnay/train.py)
+[![Banking77: 87.9%](https://img.shields.io/badge/Banking77-87.9%25-brightgreen.svg)](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json)
+[![ECE fitted: 0.045](https://img.shields.io/badge/ECE_fitted-0.045-blueviolet.svg)](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json)
+[![Gates: 19/19](https://img.shields.io/badge/gates-19%2F19-success.svg)](https://github.com/eulogik/nirnay/blob/main/GATES.md)
 [![Built by Eulogik](https://img.shields.io/badge/built_by-Eulogik-orange.svg)](https://eulogik.com)
 
 **NIRNAY (निर्णय, "decision") is a 450M open-weight classifier for banking intent and typed decisions.** One forward pass turns a state plus a question into calibrated probabilities. No text generation, no API key, no per-call bill. Apache-2.0, built by [Eulogik](https://eulogik.com).
 
-![Banking77: NIRNAY vs Jev vs untrained, same 3,080 test cases](./assets/benchmark_banking77.png)
+![Banking77: NIRNAY vs Jev vs untrained, same 3,080 test cases](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/benchmark_banking77.png)
 
 Banking77 keywords for search: banking intent classification, 77-way intent classifier, intent detection model, small language model for classification, calibrated decision model, system one model, Jev alternative, Laya fine-tune, on-device text classifier, Apache 2.0 classifier.
 
@@ -23,7 +23,7 @@ Banking77 keywords for search: banking intent classification, 77-way intent clas
 | Julia-1 144M | 0.64 (their 72-label pilot, n=100, shortlist) | their card concedes grouped routing drops answers |
 | Untrained baseline | 0.143 (our template, our measurement) | fresh weights |
 
-Raw JSON: [`eval/banking77_phase_b.json`](./eval/banking77_phase_b.json), [`eval/banking77_phase_a.json`](./eval/banking77_phase_a.json). Same test split for every row above. The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
+Raw JSON: [`eval/banking77_phase_b.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json), [`eval/banking77_phase_a.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_a.json). Same test split for every row above. The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
 
 Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. Corpus latency work (ONNX) is open.
 
@@ -54,26 +54,26 @@ The checkpoint loads with `NirnayAgent(checkpoint_path=...)`. Full eval harness:
 
 Base is Laya 421M (Apache-2.0) plus ~30M of additions (concept bottleneck, deep supervision, coarse-to-fine pointer, byte path). 7,000 Phase A steps + 50 RLCD steps, all on one Mac. Three-group optimizer, seeded everything, hashes frozen before training.
 
-![Probe accuracy and flat NCP across all 7,000 steps](./assets/training_stability.png)
+![Probe accuracy and flat NCP across all 7,000 steps](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/training_stability.png)
 
 Two training deaths taught us the fixes (both landed, both gated):
 
 1. **Scale runaway.** The concept encoder output grew unboundedly (healthy RMS 0.09, dead 13.5) while centroids sat still, so the VQ loss exploded 300x. Fix: affine-free LayerNorm on `z` before quantize. Scale stops being a degree of freedom. Zero new params.
 2. **Usage collapse.** With no pressure on code usage, all tokens fell into one code per chunk, the quantized states went constant, and accuracy flatlined at 1/77 with no loss spike to warn you. Fix: a load-balancing aux term (hard fractions times soft probs, linear so gradients never vanish).
 
-Plus a safety net around training itself: heldout probes every 250 steps, best-checkpoint retention, and an abort that fires when accuracy halves. It caught four real collapses during development. Details: [`NIRNAY-Breakthrough-Plan.md`](./NIRNAY-Breakthrough-Plan.md) (amendment 2026-09-26), [`MEMORY.md`](./MEMORY.md).
+Plus a safety net around training itself: heldout probes every 250 steps, best-checkpoint retention, and an abort that fires when accuracy halves. It caught four real collapses during development. Details: [`NIRNAY-Breakthrough-Plan.md`](https://github.com/eulogik/nirnay/blob/main/NIRNAY-Breakthrough-Plan.md) (amendment 2026-09-26), [`MEMORY.md`](https://github.com/eulogik/nirnay/blob/main/MEMORY.md).
 
 ## Calibration
 
 We report raw and fitted ECE on every eval, always. Phase_b on Banking77 test:
 
-![Reliability diagram, measured on test set](./assets/reliability.png)
+![Reliability diagram, measured on test set](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/reliability.png)
 
 Most mass sits above 0.9 confidence at 92% accuracy there. Per-bucket temperatures ship with the run.
 
 ## Architecture
 
-![Forward pass](./assets/architecture.png)
+![Forward pass](https://raw.githubusercontent.com/eulogik/nirnay/main/assets/architecture.png)
 
 Bytes and token ids feed a frozen Laya encoder (LoRA adapters train). A concept bottleneck (layer-normed product-VQ, 4 chunks x 32 codes, mixture-of-slots) adds a learned residual. A 2-layer head scores dense markers; a coarse-to-fine pointer re-ranks the top 20 for 77-way decisions. Per-bucket temperatures calibrate the output. Deep supervision at layers 4/8/12 and RLCD exist only at training time.
 
@@ -81,7 +81,7 @@ Bytes and token ids feed a frozen Laya encoder (LoRA adapters train). A concept 
 
 * `eval/` holds the raw result JSONs. Reproduce with `scripts/eval_checkpoint.py --checkpoint <ckpt>`.
 * JevBench public (231 items, shipped checkpoint): **0.550** overall, easy 0.875, original 0.569, hard 0.396. The hard tier (long policy docs, probability, temporal reasoning) is the gap. We publish it because the plan pre-registers pass/fail either way. Training data for that gap (10k programmatic reasoning items, ground truth by construction) is in `src/nirnay/data_synth_hard.py`.
-* 19/19 gate checks green ([`GATES.md`](./GATES.md)). Zero-shot and fine-tuned numbers are never mixed.
+* 19/19 gate checks green ([`GATES.md`](https://github.com/eulogik/nirnay/blob/main/GATES.md)). Zero-shot and fine-tuned numbers are never mixed.
 
 ## Limits
 
