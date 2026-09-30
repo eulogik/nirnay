@@ -215,8 +215,14 @@ class ConceptBottleneck(nn.Module):
         self,
         hidden: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
+        compute_aux: bool = True,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """hidden: [B, L, encoder_hidden] → (out same shape, info dict)."""
+        """hidden: [B, L, encoder_hidden] → (out same shape, info dict).
+
+        compute_aux=False skips the NCP loss (inference/ONNX-export path:
+        the loss value never feeds back into logits, and its empty-check
+        breaks symbolic export).
+        """
         z = self.encode(hidden)
         if attention_mask is not None:
             z = z * attention_mask.to(z.dtype).unsqueeze(-1)
@@ -234,10 +240,13 @@ class ConceptBottleneck(nn.Module):
         out = hidden + delta
         if attention_mask is not None:
             out = out * attention_mask.to(out.dtype).unsqueeze(-1)
-        loss = self.ncp_loss(
-            z, z_q, gate_w, attention_mask=attention_mask, soft_codes=soft,
-            codes=codes,
-        )
+        if compute_aux:
+            loss = self.ncp_loss(
+                z, z_q, gate_w, attention_mask=attention_mask, soft_codes=soft,
+                codes=codes,
+            )
+        else:
+            loss = z.new_zeros(())
         info = {"codes": codes, "gate_weights": gate_w, "ncp_loss": loss}
         return out, info
 

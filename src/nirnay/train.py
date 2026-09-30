@@ -136,7 +136,9 @@ class NirnayTrainModel(nn.Module):
             ),
         }
 
-    def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def forward(
+        self, batch: dict[str, torch.Tensor], compute_aux: bool = True
+    ) -> dict[str, Any]:
         self._captured.clear()
         ids = batch["input_ids"]
         att = batch["attention_mask"]
@@ -159,7 +161,7 @@ class NirnayTrainModel(nn.Module):
         ncp = h.new_zeros(())
         codes = None
         if self.concepts is not None:
-            h, info = self.concepts(h, attention_mask=att)
+            h, info = self.concepts(h, attention_mask=att, compute_aux=compute_aux)
             ncp = info["ncp_loss"]
             codes = info["codes"]
 
@@ -186,49 +188,53 @@ class NirnayTrainModel(nn.Module):
             if labels is not None and bool(labels.ge(0).any()):
                 c2f_eligible &= labels.ge(0) & labels.lt(self.c2f.num_labels)
             rows = torch.nonzero(c2f_eligible, as_tuple=False).flatten()
-            if rows.numel() > 0:
-                row_hidden = h.index_select(0, rows)
-                row_mask = att.index_select(0, rows).to(h.dtype).unsqueeze(-1)
-                if "state_mask" in batch:
-                    sm = batch["state_mask"].index_select(0, rows)
-                    sm = sm.to(h.dtype).unsqueeze(-1)
-                    sm = torch.where(sm.sum(dim=1, keepdim=True) > 0, sm, row_mask)
-                    pool_mask = sm
-                else:
-                    pool_mask = row_mask
-                query = (row_hidden * pool_mask).sum(dim=1) / pool_mask.sum(
-                    dim=1
-                ).clamp_min(1.0)
-                # Stage-1: dense [MASK]-scorer top-k candidates (plan §1
-                # "retrieve top-20 from 77+"). Gold teacher-forcing applies
-                # only while training — eval/serve measure honest retrieval.
-                dense = logits.index_select(0, rows)
-                k = min(self.c2f.top_k, dense.size(1))
-                cand = dense.topk(k, dim=-1).indices
-                gold = None
-                if (
-                    self.training
-                    and labels is not None
-                    and bool((labels.index_select(0, rows) >= 0).all())
-                ):
-                    gold = labels.index_select(0, rows)
-                    present = (cand == gold.unsqueeze(-1)).any(dim=-1, keepdim=True)
-                    cand = torch.where(
-                        present, cand, torch.cat([cand[:, :-1], gold.unsqueeze(-1)], dim=-1)
-                    )
-                bias = dense.gather(1, cand)
-                c2f_out = self.c2f(
-                    query, gold, candidates=cand, logit_bias=bias
+            # No `if rows.numel() > 0` guard: every op below is empty-safe
+            # (index_select/gather/topk/softmax/index_copy all admit zero
+            # rows), so an empty selection is an exact no-op. A Python guard
+            # on a data-dependent count would also block symbolic (ONNX)
+            # export, while this form traces cleanly.
+            row_hidden = h.index_select(0, rows)
+            row_mask = att.index_select(0, rows).to(h.dtype).unsqueeze(-1)
+            if "state_mask" in batch:
+                sm = batch["state_mask"].index_select(0, rows)
+                sm = sm.to(h.dtype).unsqueeze(-1)
+                sm = torch.where(sm.sum(dim=1, keepdim=True) > 0, sm, row_mask)
+                pool_mask = sm
+            else:
+                pool_mask = row_mask
+            query = (row_hidden * pool_mask).sum(dim=1) / pool_mask.sum(
+                dim=1
+            ).clamp_min(1.0)
+            # Stage-1: dense [MASK]-scorer top-k candidates (plan §1
+            # "retrieve top-20 from 77+"). Gold teacher-forcing applies
+            # only while training — eval/serve measure honest retrieval.
+            dense = logits.index_select(0, rows)
+            k = min(self.c2f.top_k, dense.size(1))
+            cand = dense.topk(k, dim=-1).indices
+            gold = None
+            if (
+                self.training
+                and labels is not None
+                and bool((labels.index_select(0, rows) >= 0).all())
+            ):
+                gold = labels.index_select(0, rows)
+                present = (cand == gold.unsqueeze(-1)).any(dim=-1, keepdim=True)
+                cand = torch.where(
+                    present, cand, torch.cat([cand[:, :-1], gold.unsqueeze(-1)], dim=-1)
                 )
-                full_probs = c2f_out["full_probs"]
-                c2f_probs = c2f_probs.index_copy(0, rows, full_probs)
-                row_logits = torch.log(full_probs.clamp_min(1e-8))
-                if row_logits.size(1) < logits.size(1):
-                    row_logits = F.pad(row_logits, (0, logits.size(1) - row_logits.size(1)), value=-1e4)
-                else:
-                    row_logits = row_logits[:, : logits.size(1)]
-                replacement = logits.new_full(logits.shape, -1e4).index_copy(0, rows, row_logits)
-                logits = torch.where(c2f_eligible.unsqueeze(-1), replacement, logits)
+            bias = dense.gather(1, cand)
+            c2f_out = self.c2f(
+                query, gold, candidates=cand, logit_bias=bias
+            )
+            full_probs = c2f_out["full_probs"]
+            c2f_probs = c2f_probs.index_copy(0, rows, full_probs)
+            row_logits = torch.log(full_probs.clamp_min(1e-8))
+            if row_logits.size(1) < logits.size(1):
+                row_logits = F.pad(row_logits, (0, logits.size(1) - row_logits.size(1)), value=-1e4)
+            else:
+                row_logits = row_logits[:, : logits.size(1)]
+            replacement = logits.new_full(logits.shape, -1e4).index_copy(0, rows, row_logits)
+            logits = torch.where(c2f_eligible.unsqueeze(-1), replacement, logits)
 
         p_det = torch.softmax(logits.detach(), -1)
         k = mmask.sum(-1).clamp(min=2).float()

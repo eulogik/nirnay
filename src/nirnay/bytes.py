@@ -132,13 +132,17 @@ class ByteFusion(nn.Module):
         # No LayerNorm after path output: norm-after-projection normalizes any
         # nonzero to_encoder output to unit variance (see BytePath.norm note).
         patches = self.path(byte_ids, byte_mask)
-        if patches.size(1) != token_embeddings.size(1):
-            patches = nn.functional.interpolate(
-                patches.transpose(1, 2),
-                size=token_embeddings.size(1),
-                mode="linear",
-                align_corners=False,
-            ).transpose(1, 2)
+        # Unconditional interpolate (no `if patches.size(1) != ...` guard):
+        # linear interpolate to the same size is bit-exact identity, and a
+        # Python branch on symbolic shapes blocks ONNX export. Patches are
+        # always 64 wide (512 bytes / patch 8) while states vary, so the old
+        # guard took this path on every real input anyway.
+        patches = nn.functional.interpolate(
+            patches.transpose(1, 2),
+            size=token_embeddings.size(1),
+            mode="linear",
+            align_corners=False,
+        ).transpose(1, 2)
         if byte_mask is not None:
             valid = byte_mask.to(torch.bool).any(dim=1, keepdim=True)
             patches = patches * valid.unsqueeze(-1).to(patches.dtype)
