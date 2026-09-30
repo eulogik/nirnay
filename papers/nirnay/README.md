@@ -9,7 +9,10 @@ first-time cs.LG/cs.CL submissions may need endorsement):
 
 1. Flip `github.com/eulogik/nirnay` and HF `eulogik/nirnay-450m` public
    first: the abstract promises public code/weights/JSONs.
-2. Confirm the author line (currently "Eulogik, info@eulogik.com").
+2. Author line set: Gautam Kishore (Eulogik), info@eulogik.com.
 3. Submit source (main.tex + figs/): title as-is, subjects cs.LG
-   primary + cs.CL secondary, license arXiv perpetual (code stays
-   Apache-2.0), comment with code/weights URLs.
+   primary + cs.CL + cs.AI secondary (house papers list multiple),
+   license arXiv perpetual (code stays Apache-2.0), comment: "9 pages,
+   5 figures, 3 tables. Code, weights:
+   https://github.com/eulogik/nirnay and
+   https://huggingface.co/eulogik/nirnay-450m".
