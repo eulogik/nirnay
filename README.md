@@ -20,6 +20,7 @@ Banking77 keywords for search: banking intent classification, 77-way intent clas
 | **NIRNAY phase_b** | **0.8792** (Brier 0.208, ECE raw 0.089 / fitted 0.045) | fine-tuned, this repo |
 | NIRNAY phase_a | 0.8656 (Brier 0.240, ECE raw 0.110 / fitted 0.033) | fine-tuned, this repo |
 | Jev 1.13.0 | 0.803 (same 3,080 cases, recorded run) | zero-shot API ([jevbench.xyz](https://jevbench.xyz)) |
+| Julia-1 144M | 0.64 (their 72-label pilot, n=100, shortlist) | their card concedes grouped routing drops answers |
 | Untrained baseline | 0.143 (our template, our measurement) | fresh weights |
 
 Raw JSON: [`eval/banking77_phase_b.json`](./eval/banking77_phase_b.json), [`eval/banking77_phase_a.json`](./eval/banking77_phase_a.json). Same test split for every row above. The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
