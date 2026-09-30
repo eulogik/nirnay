@@ -1,10 +1,37 @@
 [project]
 name = "nirnay"
 version = "0.1.0"
-description = "NIRNAY-1 — System 1.5 calibrated decision model (Jev/Laya-compatible)"
+description = "NIRNAY: small calibrated decision model, Banking77 87.9% (Jev/Laya-compatible wire format)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python = ">=3.12"
+requires-python = ">=3.10"
+authors = [
+    { name = "Eulogik", email = "info@eulogik.com" },
+]
+keywords = [
+    "banking77",
+    "intent-classification",
+    "text-classification",
+    "calibrated-decisions",
+    "decision-model",
+    "system-one",
+    "laya",
+    "small-language-model",
+    "edge-ai",
+    "lora",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "torch>=2.4.0",
     "transformers>=4.48.0",
@@ -26,6 +53,13 @@ dev = [
 [project.scripts]
 nirnay-server = "nirnay.server:main"
 nirnay-train = "nirnay.train:main"
+
+[project.urls]
+Homepage = "https://eulogik.com"
+Repository = "https://github.com/eulogik/nirnay"
+Documentation = "https://github.com/eulogik/nirnay/blob/main/README.md"
+"Bug Tracker" = "https://github.com/eulogik/nirnay/issues"
+"Model Weights" = "https://huggingface.co/eulogik/nirnay-450m"
 
 [build-system]
 requires = ["hatchling"]
