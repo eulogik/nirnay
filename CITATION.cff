@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "NIRNAY 450M: a small calibrated decision model that beats Jev on Banking77"
+message: "If you use this model, please cite it as below."
+type: software
+authors:
+  - name: Eulogik
+    website: https://eulogik.com
+    email: info@eulogik.com
+repository-code: https://github.com/eulogik/nirnay
+url: https://eulogik.com
+license: Apache-2.0
+date-released: 2026-09-30
+keywords:
+  - banking77
+  - intent-classification
+  - calibrated-decisions
+  - decision-model
+  - system-one
+  - small-language-model
+  - laya
