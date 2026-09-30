@@ -1,0 +1,12 @@
+{
+  "accuracy": 0.8655844155844156,
+  "brier": 0.2396956351758626,
+  "checkpoint": "artifacts/phase_a/phase_a.pt",
+  "data": "data/banking77/test.csv",
+  "device": "mps",
+  "ece_fitted": 0.032533240665770846,
+  "ece_raw": 0.10981167645371878,
+  "mean_conf": 0.9740734770872643,
+  "n": 3080,
+  "temperature": 2.1779661016949152
+}
