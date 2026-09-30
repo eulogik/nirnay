@@ -30,7 +30,7 @@ Fitted ECE 0.045 on test. Raw result JSONs ship in the repo under `eval/`. Repro
 
 Note on Julia-1: I tried running their checkpoint head-to-head in our harness and hit version drift in their pinned stack (their code targets transformers <5.1 plus a native backend that needs building). So the honest version is cited numbers, setups attached: their 0.64 comes from an easier setup than ours (72 labels, 100 items, shortlist) and still trails by 24 points. Native 77-way is exactly what their 2-to-20 option limit cannot do, and exactly what our pointer stage exists for.
 
-Speed, batch-1, measured: 209 ms on M4 GPU, 361 ms on CPU. 19/19 gate checks green. Trained on one Mac in about 4 hours.
+Speed, batch-1, measured: 209 ms on M4 GPU, 361 ms on CPU. 19/19 gate checks green. Trained on one Mac in about 4 hours, zero cloud bill.
 
 ## What it is bad at
 

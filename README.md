@@ -103,7 +103,7 @@ Bytes and token ids feed a frozen Laya encoder (LoRA adapters train). A concept 
 
 **What license?** Apache-2.0. Commercial use fine.
 
-**What hardware trained it?** One Mac (M4, 16GB). Full run about 4 hours. Receipts in `logs/` and `MEMORY.md`.
+**What hardware trained it?** One Mac (M4, 16GB). Full run about 4 hours. Cloud spend: $0. Receipts in `logs/` and `MEMORY.md`.
 
 **What is it bad at?** Long documents over 512 tokens, and JevBench-hard style probability/temporal reasoning (0.396). See Limits.
 
