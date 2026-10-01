@@ -1,8 +1,8 @@
 # HN (post Thu 17:00 IST sharp)
 
-## Chosen: option 3 + GitHub URL, no body text (Show HN takes title + URL only; the comment below is the text)
+## Chosen: beats-Jev title + GitHub URL, no body text (Show HN takes title + URL only; the comment below is the text)
 
-- Title: `Show HN: NIRNAY, an Apache-2.0 Jev alternative for intent classification`
+- Title: `Show HN: NIRNAY, 450M open decision model beats Jev on Banking77`
 - URL: `https://github.com/eulogik/nirnay`
 - Then post the comment body as the first comment within 5 minutes.
 
@@ -43,4 +43,5 @@ github.com/eulogik/nirnay and huggingface.co/eulogik/nirnay-450m
 
 Honest limits: 512-token context, JevBench-hard reasoning is weak
 (0.396, published in the repo), CPU is 361ms per decision in PyTorch.
-Happy to answer anything, especially on the quantization fixes.
+Reproduce any number: scripts/eval_checkpoint.py plus the raw JSONs
+under eval/. Happy to answer anything, especially on the quantization fixes.
