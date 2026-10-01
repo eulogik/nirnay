@@ -1,6 +1,12 @@
 # HN (post Thu 17:00 IST sharp)
 
-## Title (pick one, do not edit after posting)
+## Chosen: option 3 + GitHub URL, no body text (Show HN takes title + URL only; the comment below is the text)
+
+- Title: `Show HN: NIRNAY, an Apache-2.0 Jev alternative for intent classification`
+- URL: `https://github.com/eulogik/nirnay`
+- Then post the comment body as the first comment within 5 minutes.
+
+## Title (options, kept for record)
 
 1. Show HN: 450M open decision model scores 87.9% on Banking77, trained on one Mac
 2. Show HN: Fixing two training-collapse modes in quantized concept bottlenecks
