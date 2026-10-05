@@ -42,8 +42,9 @@ JevBench public: 0.55 overall (easy 0.88, hard 0.40). Long policy docs, probabil
 
 Model: `eulogik/nirnay-450m` on Hugging Face (config, weights, eval JSONs).
 Code and eval harness: `github.com/eulogik/nirnay`. Release v0.1.0 ships
-`phase_b.pt` as a direct download. One-command install, checkpoint loads
-locally, no GPU needed (CPU works, just slower). Colab notebook and Space
-demo land next; GGUF/Ollama after that.
+`phase_b.pt` as a direct download. No install needed either: there is a
+[live demo](https://huggingface.co/spaces/GautamKishore/nirnay-demo),
+type a message, get the intent. Colab notebook in the repo for local runs.
+GGUF/Ollama after that.
 
 Built by [Eulogik](https://eulogik.com). Same house rules as pico-type and NanoForecast: Apache-2.0, measured numbers only, runs on your hardware.

@@ -13,7 +13,7 @@
   <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/hero.png" alt="NIRNAY 450M: 87.9% on Banking77, fitted ECE 0.045, Apache-2.0" width="100%" />
 </p>
 
-[Model](https://huggingface.co/eulogik/nirnay-450m) · [Code](https://github.com/eulogik/nirnay) · [Paper](https://github.com/eulogik/nirnay/blob/main/papers/nirnay/main.pdf) · [Evals](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json)
+[Model](https://huggingface.co/eulogik/nirnay-450m) · [Live demo](https://huggingface.co/spaces/GautamKishore/nirnay-demo) · [Code](https://github.com/eulogik/nirnay) · [Paper](https://github.com/eulogik/nirnay/blob/main/papers/nirnay/main.pdf) · [Evals](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b.json)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/eulogik/nirnay/main/assets/benchmark_banking77.png" alt="Banking77: NIRNAY vs Jev vs Julia-1 vs untrained, same 3,080 test cases" width="100%" />
@@ -68,6 +68,8 @@ Jev figures above are third-party published, never measured here (no API access)
 Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. Corpus latency work (ONNX) is open.
 
 ## Try it
+
+No install needed: **[live demo](https://huggingface.co/spaces/GautamKishore/nirnay-demo)** (type a message, get the intent). Or run it yourself:
 
 ```bash
 pip install git+https://github.com/eulogik/nirnay

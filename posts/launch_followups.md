@@ -59,6 +59,28 @@ weeks. New title then, something like: Show HN: 450M open decision
 model holds 87.9 macro-F1 next to Cloudflare's 27B. If you want the
 actual removal reason, mail hn@ycombinator.com, they answer.
 
+## 5. Demo is live (post these now, Oct 5)
+
+Space verified end to end through the public API (correct prediction,
+0.96 confidence). Link: https://huggingface.co/spaces/GautamKishore/nirnay-demo
+
+X (2 posts, reply to your thread):
+
+1/2
+Live demo is up, no install. Type a banking message, get the intent
+plus probabilities: https://huggingface.co/spaces/GautamKishore/nirnay-demo
+2/2
+Runs free on ZeroGPU. Same 450M weights as the release (87.9%
+Banking77, ECE 0.045). Break it and tell me where.
+
+LinkedIn (short follow-up):
+
+The demo is live, no install needed. Type a customer message, get the
+intent plus calibrated probabilities, right in the browser:
+https://huggingface.co/spaces/GautamKishore/nirnay-demo
+Same 450M Apache-2.0 weights as the release. If you run triage or
+routing, try your three hardest messages on it and post what happens.
+
 ## The real traction fix (bigger than any post)
 
 Text posts without a runnable thing die. The single highest-leverage

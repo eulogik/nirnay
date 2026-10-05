@@ -11,6 +11,19 @@ import os
 
 import torch
 
+try:
+    # NOTE: this repo has a local spaces/ folder, which shadows the PyPI
+    # `spaces` package when run from the repo root. The getattr check keeps
+    # local runs working while the Space gets the real decorator.
+    import spaces as _spaces_pkg
+
+    _GPU = _spaces_pkg.GPU
+except Exception:  # noqa: BLE001
+    def _GPU(fn=None, **kwargs):
+        if fn is None:
+            return lambda f: f
+        return fn
+
 _MODEL = None
 _LABELS = None
 
@@ -37,6 +50,7 @@ def _load():
     return agent
 
 
+@_GPU
 def classify(message: str):
     message = (message or "").strip()
     if not message:
@@ -79,9 +93,13 @@ def build_demo():
         top5 = gr.Label(label="Top 5 probabilities")
         btn.click(classify, inputs=msg, outputs=[pred, top5], api_name="predict")
         msg.submit(classify, inputs=msg, outputs=[pred, top5], api_name="predict")
+    demo.queue()
     return demo
 
 
 if __name__ == "__main__":
-    _load()
+    # NIRNAY_PRELOAD=0 skips the startup warmup (ZeroGPU: no GPU at boot,
+    # so the first request loads the model inside the GPU worker instead).
+    if os.environ.get("NIRNAY_PRELOAD", "1") == "1":
+        _load()
     build_demo().launch(server_port=int(os.environ.get("PORT", "7860")))
