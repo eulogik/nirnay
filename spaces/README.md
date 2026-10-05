@@ -1,15 +1,9 @@
-# NIRNAY demo Space (go-live checklist)
+# NIRNAY demo Space (LIVE)
 
-This folder stages the Hugging Face Space. It is NOT live yet: the model
-repo stays private until verification finishes.
+Live: https://huggingface.co/spaces/GautamKishore/nirnay-demo
+(ZeroGPU, free tier, under the personal account since orgs need Team
+for Gradio Spaces; both ZeroGPU slots were free. See MEMORY.md.)
 
-Go-live (2 steps, owner only):
-
-1. Create Space `eulogik/nirnay-demo` (Gradio SDK, CPU basic, public),
-   upload `app.py` + `requirements.txt` from this folder.
-2. In Space Settings → Variables, add secret `HF_TOKEN` (read access to
-   the private `eulogik/nirnay-450m` model repo, or flip that repo public
-   first and drop the secret).
-
-Then open the Space URL and classify. Tested locally 2026-09-30
-(CPU + MPS, banking + garbage inputs, see MEMORY.md).
+Go-live was done by the agent via API: create_repo (sdk gradio,
+hardware zero-a10g) + upload app.py, requirements.txt, README_hf.md
+as README.md. No HF_TOKEN secret needed (model repo is public).
