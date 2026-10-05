@@ -35,6 +35,19 @@ Raw JSON: [`eval/banking77_phase_b.json`](https://github.com/eulogik/nirnay/blob
 
 > The honest caveat: we fine-tuned on the train split, Jev answered zero-shot. That is exactly the Laya thesis (a model you fine-tune on your data), and this repo proves it works: +7.6 points over the API on identical cases.
 
+Same metric as Cloudflare's Decision Index table (macro-F1, measured by us on the same 3,080 cases, per-class scores in [`eval/banking77_phase_b_macro.json`](https://github.com/eulogik/nirnay/blob/main/eval/banking77_phase_b_macro.json)):
+
+| Model | Banking77 macro-F1 | Setup |
+|---|---|---|
+| Clef 27B | 0.942 | their Decision Index 0.2.1 suite (self-reported) |
+| Clef-Flash 9B | 0.909 | their Decision Index 0.2.1 suite (self-reported) |
+| **NIRNAY phase_b** | **0.8785** | fine-tuned 450M, this repo |
+| Kev 9B | 0.848 | their Decision Index 0.2.1 suite (self-reported) |
+| Jev 1.13.0 | 0.797 | their Decision Index 0.2.1 suite (self-reported) |
+| Laya | 0.143 | their Decision Index 0.2.1 suite (self-reported) |
+
+Same metric family, different harnesses, so read it as a cross-check, not a leaderboard. We beat Jev by 8 and Kev by 3 at 60x and 20x fewer params, on a Mac instead of an H200.
+
 | Benchmark / Metric | Jev 1.13.0 | NIRNAY phase_b |
 |---|---|---|
 | Banking77 (same 3,080) | 0.803 (recorded run) | **0.8792** (fine-tuned) |

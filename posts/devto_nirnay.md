@@ -30,6 +30,8 @@ Fitted ECE 0.045 on test. Raw result JSONs ship in the repo under `eval/`. Repro
 
 Note on Julia-1: I tried running their checkpoint head-to-head in our harness and hit version drift in their pinned stack (their code targets transformers <5.1 plus a native backend that needs building). So the honest version is cited numbers, setups attached: their 0.64 comes from an easier setup than ours (72 labels, 100 items, shortlist) and still trails by 24 points. Native 77-way is exactly what their 2-to-20 option limit cannot do, and exactly what our pointer stage exists for.
 
+Same metric as Cloudflare's Decision Index table (macro-F1, measured by us on the same 3,080 cases): Clef 27B 0.942 / Clef-Flash 9B 0.909 / NIRNAY phase_b 0.8785 / Kev 9B 0.848 / Jev 1.13.0 0.797. Same metric family, different harnesses, so a cross-check, not a leaderboard. We beat Jev by 8 and Kev by 3 at a fraction of the size, on a Mac instead of an H200.
+
 Speed, batch-1, measured: 209 ms on M4 GPU, 361 ms on CPU. 19/19 gate checks green. Trained on one Mac in about 4 hours, zero cloud bill.
 
 ## What it is bad at

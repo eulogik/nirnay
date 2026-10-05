@@ -243,6 +243,12 @@ Figure~\ref{fig:bench}). Phase A: 0.8656 accuracy, Brier 0.240, raw ECE
 Brier 0.208, raw ECE 0.089, fitted 0.045. The best-probe checkpoint scores
 lower on test (0.8542) than the final one (0.8656): probes detect collapse,
 they do not fine-rank. The Jev reference ran the same 3,080 cases~\cite{jevbenchxyz}.
+On macro-F1, the metric of Cloudflare's Decision Index 0.2.1 suite,
+phase\_b scores 0.8785 on the same 3,080 cases (per-class scores ship with
+the release); their self-reported row reads Clef 0.942, Clef-Flash 0.909,
+Kev 0.848, Jev 0.797. Same metric family, different harnesses, so this is
+a cross-check, not a leaderboard: we beat Jev by 8 points and Kev by 3 at
+60x and 20x fewer parameters.
 
 \begin{table}[h]
 \centering
