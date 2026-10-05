@@ -8,7 +8,7 @@
 
 \title{NIRNAY: A 450M Calibrated Decision Model with Stable Product-Quantized Concepts}
 \author{Gautam Kishore \\ {\small Eulogik} \\ {\small \texttt{info@eulogik.com}}}
-\date{September 30, 2026}
+\date{October 5, 2026}
 
 \begin{document}
 \maketitle
@@ -33,8 +33,11 @@ heldout-probe safety net (periodic eval, best-checkpoint retention,
 collapse abort) caught four real collapses during development. The
 resulting 450M model scores \textbf{0.8792} on Banking77 test (3,080
 cases, Brier 0.208, fitted ECE 0.045), against 0.803 for the Jev 1.13.0 API
-on the same cases and 0.64 for the 144M Julia-1 on its easier 72-label
-pilot. Code, weights, and raw eval JSONs are public under Apache-2.0.
+on the same cases (ours fine-tuned on the train split; Jev zero-shot)
+and 0.64 for the 144M Julia-1 on its easier 72-label
+pilot. Code, weights, and raw eval JSONs are public under Apache-2.0
+at \url{https://github.com/eulogik/nirnay} and
+\url{https://huggingface.co/eulogik/nirnay-450m}.
 \end{abstract}
 
 \noindent\textbf{Keywords:} decision models, calibration, vector quantization,
@@ -309,8 +312,7 @@ Phase B reward is outcome-only, which bounds what it can teach.
 Positioning, all numbers third-party and dated 2026-09-30: JevBench v1.5.4
 ranks Cygnet 73.7,
 Winnow-12B 73.2, Jev 72.1 over 106 systems~\cite{jevbench}; Laya (421M,
-Apache-2.0, our base~\cite{laya}) holds $\approx$4k likes
-with 33ms inference and a 56.4\% independent core score; Julia-1 (144M,
+Apache-2.0, our base~\cite{laya}) with 33ms inference; Julia-1 (144M,
 Apache-2.0~\cite{julia1}) beats Jev
 on typed decisions but reports 0.64 on its Banking77 pilot and caps native
 calls at 20 options;
@@ -321,14 +323,16 @@ CPU classification with honest calibration, where the board is thinnest.
 
 512-token context; 361ms CPU per decision in PyTorch (no ONNX yet, no GGUF
 yet); JevBench-hard reasoning as reported; best-probe checkpoints do not
-necessarily test best.
+necessarily score best on test.
 
 \section{Reproducibility}
 
-Code, weights (phase\_b, Apache-2.0), frozen data hashes, all gate checks
-(19/19), and raw eval JSONs ship with the release. Seeds fixed (13);
-hardware one M4 Mac. Nothing in this paper comes from closed APIs.
-Delivered-error claims rest on external ground-truth audits only~\cite{cheap2609}.
+Code (\url{https://github.com/eulogik/nirnay}), weights
+(\url{https://huggingface.co/eulogik/nirnay-450m}, phase\_b, Apache-2.0),
+frozen data hashes, all gate checks (19/19), and raw eval JSONs ship with
+the release. Seeds fixed (13); hardware one M4 Mac. Nothing in this paper
+comes from closed APIs. Delivered-error claims rest on external
+ground-truth audits only~\cite{cheap2609}.
 
 \begin{thebibliography}{99}
 
