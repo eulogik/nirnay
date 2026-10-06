@@ -155,7 +155,7 @@ Bytes and token ids feed a frozen Laya encoder (LoRA adapters train). A concept 
 ## Limits
 
 * 512-token context. Long documents get head-truncated; the hard JevBench tier shows it (0.396). Longer context is v1.1 work.
-* CPU latency 361 ms per decision in PyTorch. No ONNX export yet, no GGUF/Ollama build yet.
+* CPU latency 361 ms per decision in PyTorch. ONNX export ships under `onnx/` on the model repo (parity proven 37/37, no speedup yet). No GGUF/Ollama build yet, LoRA-merged encoder weights are in progress for the converter path.
 * Banking77 is the proven lane (triage, routing, guardrails). Anything else, measure before trusting.
 
 ## FAQ
