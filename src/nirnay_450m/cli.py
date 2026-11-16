@@ -135,11 +135,15 @@ def _doctor(_: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    from . import __version__
+
     parser = argparse.ArgumentParser(
         prog="nirnay",
         description="Local calibrated decisions with NIRNAY 450M.",
     )
-    parser.add_argument("--version", action="version", version="nirnay-450m")
+    parser.add_argument(
+        "--version", action="version", version=f"nirnay-450m {__version__}"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     c = sub.add_parser("classify", help="classify one state or a JSONL batch")
