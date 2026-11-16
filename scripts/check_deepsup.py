@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.deepsup import DEEP_LAYERS, DEEP_WEIGHT, DeepSupervision
+    from nirnay_450m.deepsup import DEEP_LAYERS, DEEP_WEIGHT, DeepSupervision
 
     torch.manual_seed(0)
     H, K, B, L = 64, 10, 8, 12

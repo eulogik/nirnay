@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    from nirnay.data import (
+    from nirnay_450m.data import (
         BANKING77_LABELS,
         build_phase_a_mix,
         freeze_hashes,
@@ -105,7 +105,7 @@ def main() -> int:
             return 1
 
     # Banking77 examples (when cache present) respect 77-way answer set
-    from nirnay.data import banking77_choice_examples
+    from nirnay_450m.data import banking77_choice_examples
 
     bank_ex = banking77_choice_examples([("I am still waiting on my card?", 11)], limit=1)
     if bank_ex[0].answer != "card_arrival":

@@ -39,7 +39,7 @@ Canonical order (from repo root, `uv` managed venv):
 
 ```sh
 uv sync
-uv run python -c "import nirnay; import nirnay.model; import nirnay.server; print('nirnay import ok')"   # G1
+uv run python -c "import nirnay_450m; import nirnay_450m.model; import nirnay_450m.server; print('nirnay import ok')"   # G1
 uv run python scripts/check_byte_path.py    # G3
 uv run python scripts/check_nope_mask.py    # G4
 uv run python scripts/check_temps_refit.py  # G6
@@ -63,7 +63,7 @@ uv run python scripts/check_training_durability.py # checkpoint/resume
 
 # Phase A/B training CLI (device: auto|mps|cpu|cuda; use batch 4 on the 16GB M4)
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
-  uv run python -m nirnay.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
+  uv run python -m nirnay_450m.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
     --banking-dir data/banking77 --out-dir artifacts/phase_a --lora-rank 8 --lr 0.0005 \
     --pretrained-lr 1e-5 --concepts-lr 1e-4 --checkpoint-every 250 \
     --probe-every 250 --probe-size 256 --device mps
@@ -71,11 +71,11 @@ HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
 # collapse abort; see train.py PROBE_* constants). Always pass it on long runs.
 # Resume an interrupted run explicitly; never overwrite an existing checkpoint by accident.
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
-  uv run python -m nirnay.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
+  uv run python -m nirnay_450m.train --phase a --steps 7000 --batch-size 4 --n-synth 512 \
     --banking-dir data/banking77 --out-dir artifacts/phase_a --lora-rank 8 --lr 0.0005 \
     --checkpoint-every 250 --resume --device mps
 HF_HOME="/Volumes/KIOXIA 1TB/huggingface_cache" HF_HUB_OFFLINE=1 \
-  uv run python -m nirnay.train --phase b --steps 50 --out-dir artifacts/phase_a --device mps
+  uv run python -m nirnay_450m.train --phase b --steps 50 --out-dir artifacts/phase_a --device mps
 # Do not start training unless the user says to (compute may be reserved).
 # Delayed supervisor (scheduled 2026-09-24 16:52 +0530, wake ≈19:52; E2E-proven)
 # Dry-run first; it resumes checkpoints and never overwrites one.

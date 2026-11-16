@@ -65,34 +65,58 @@ Jev figures above are third-party published, never measured here (no API access)
 * **Zero setup.** Their API works with a key. Ours needs a local install plus a 466MB checkpoint download.
 * **Languages.** We trained English banking. They serve many languages out of the box.
 
-Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. Corpus latency work (ONNX) is open.
+Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. ONNX ships (parity proven) but gave no CPU speedup; int8 is the open latency lever.
 
 ## Try it
 
-No install needed: **[live demo](https://huggingface.co/spaces/GautamKishore/nirnay-demo)** (type a message, get the intent). Or run it yourself:
+Live demo: **[huggingface.co/spaces/GautamKishore/nirnay-demo](https://huggingface.co/spaces/GautamKishore/nirnay-demo)**. Type a message, get the intent.
+
+### One line, your labels
 
 ```bash
 pip install git+https://github.com/eulogik/nirnay
+# after the PyPI release: pip install nirnay-450m
 ```
 
 ```python
-from nirnay.agent import NirnayAgent
+from nirnay_450m import Classifier
 
-agent = NirnayAgent(device="mps", checkpoint_path="phase_b.pt", enable_byte_path=False)
-out = agent.system_one(
-    "My card was charged twice for the same order.",
-    questions={"intent": {
-        "type": "choice",
-        "instructions": "Classify the banking intent.",
-        "criteria": {"duplicate_charge": "charged twice", "refund_status": "ask about refund"},
-    }},
-)
-print(out["answers"]["intent"]["probabilities"])
+clf = Classifier()  # downloads and caches the weights once
+result = clf("My card was charged twice", {
+    "duplicate_charge": "charged twice",
+    "refund_status": "asking about a refund",
+    "card_arrival": "asking where the card is",
+})
+print(result.choice, result.confidence)  # duplicate_charge 0.99
+print(result.probabilities)
 ```
 
-Choice, score, and yes/no ride the same call:
+Labels can be a dict, a JSON file, or the string `"banking77"`. The model
+reads the descriptions, not just the names: on a 10-label Banking77 subset
+it scores 0.9167 with the original names and 0.8833 with neutral keys
+("A".."J") and the same descriptions, at 86-108ms per decision on M4.
+New label sets work without retraining when they are in the same domain.
+For a new domain, fine-tuning is the honest next step.
+
+### CLI
+
+```bash
+nirnay classify "My card was charged twice" --labels banking77
+nirnay classify --input tickets.jsonl --output decisions.jsonl --labels labels.json
+nirnay serve --port 8000   # POST /v1/systemone, Jev-compatible
+nirnay doctor
+```
+
+`--threshold 0.9` marks low-confidence results as escalated. Batch mode
+reads and writes JSONL. `nirnay serve` loads the trained checkpoint by
+default, not the raw base model.
+
+### Advanced: score and yes/no
 
 ```python
+from nirnay_450m import NirnayAgent
+
+agent = NirnayAgent(device="mps")  # auto-downloads the checkpoint
 out = agent.system_one(
     "Ticket T-4411: outage started 02:10, still down, 40 agents idle.",
     questions={
@@ -111,7 +135,8 @@ print(out["answers"]["urgency"]["score"])   # expected level over the rubric
 print(out["answers"]["page_oncall"]["noul"])  # P(true)
 ```
 
-The checkpoint loads with `NirnayAgent(checkpoint_path=...)`. Full eval harness: `scripts/eval_checkpoint.py`. Server: `nirnay.server` exposes `POST /v1/systemone` (Jev-compatible wire format).
+Full eval harness: `scripts/eval_checkpoint.py`. Server wire format is
+documented in `nirnay_450m/server.py`.
 
 ## How it was trained
 

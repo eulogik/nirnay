@@ -9,7 +9,7 @@ import sys
 def main() -> int:
     import numpy as np
 
-    from nirnay.eval import evaluate_logits, evaluate_probs
+    from nirnay_450m.eval import evaluate_logits, evaluate_probs
 
     rng = np.random.default_rng(0)
 

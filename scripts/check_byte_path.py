@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.bytes import BytePath, BytePathConfig, encode_bytes
+    from nirnay_450m.bytes import BytePath, BytePathConfig, encode_bytes
 
     cfg = BytePathConfig(encoder_hidden=1024, max_bytes=512)
     path = BytePath(cfg).eval()
@@ -24,7 +24,7 @@ def main() -> int:
         return 1
 
     # Wire into agent.byte_features as well when model available is optional here.
-    from nirnay.bytes import BytePath as BP  # noqa: F401
+    from nirnay_450m.bytes import BytePath as BP  # noqa: F401
 
     print(f"BYTE_PATH_OK patches={tuple(patches.shape)}")
     return 0

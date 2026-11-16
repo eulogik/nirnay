@@ -473,8 +473,8 @@ wheels = [
 ]
 
 [[package]]
-name = "nirnay"
-version = "0.1.0"
+name = "nirnay-450m"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

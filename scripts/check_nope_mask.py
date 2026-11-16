@@ -9,7 +9,7 @@ def main() -> int:
     import torch
     from transformers import AutoConfig, AutoModel
 
-    from nirnay.nope import apply_nope_mask, nope_context, param_count, split_head_range
+    from nirnay_450m.nope import apply_nope_mask, nope_context, param_count, split_head_range
 
     # Use ModernBERT config only (no full Laya download needed for mask logic).
     cfg = AutoConfig.from_pretrained("answerdotai/ModernBERT-large")

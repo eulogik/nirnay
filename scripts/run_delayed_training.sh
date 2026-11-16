@@ -168,7 +168,7 @@ fi
 
 if [ "$DRY_RUN" -eq 1 ]; then
   printf 'DRY_RUN_OK delay_seconds=%s canary_steps=%s total_steps=%s batch_size=%s lr=%s checkpoint_every=%s max_restarts=%s eval=%s eval_limit=%s phase_b=%s\n' "$DELAY_SECONDS" "$CANARY_STEPS" "$TOTAL_STEPS" "$BATCH_SIZE" "$LEARNING_RATE" "$CHECKPOINT_EVERY" "$MAX_RESTARTS" "$RUN_EVAL" "$EVAL_LIMIT" "$RUN_PHASE_B"
-    printf 'WOULD_RUN uv run python -m nirnay.train --phase a --steps %s --batch-size %s --n-synth 512 --banking-dir data/banking77 --out-dir %s --lora-rank 8 --lr %s --seed 13 --checkpoint-every %s --device %s\n' "$TOTAL_STEPS" "$BATCH_SIZE" "$ARTIFACT_DIR" "$LEARNING_RATE" "$CHECKPOINT_EVERY" "$DEVICE"
+    printf 'WOULD_RUN uv run python -m nirnay_450m.train --phase a --steps %s --batch-size %s --n-synth 512 --banking-dir data/banking77 --out-dir %s --lora-rank 8 --lr %s --seed 13 --checkpoint-every %s --device %s\n' "$TOTAL_STEPS" "$BATCH_SIZE" "$ARTIFACT_DIR" "$LEARNING_RATE" "$CHECKPOINT_EVERY" "$DEVICE"
     if [ -n "$PRETRAINED_LR" ]; then
       printf 'WOULD_PASS --pretrained-lr %s\n' "$PRETRAINED_LR"
     fi
@@ -311,7 +311,7 @@ preflight() {
   if [ ! -f "$ROOT/data/banking77/train.csv" ]; then
     fail_hard "banking77 train.csv missing"
   fi
-  if ! uv run python -c "import nirnay, nirnay.train, nirnay.server" >/dev/null 2>&1; then
+  if ! uv run python -c "import nirnay_450m, nirnay_450m.train, nirnay_450m.server" >/dev/null 2>&1; then
     fail_hard "nirnay import preflight failed"
   fi
   if [ "${1:-}" = "quick" ]; then
@@ -337,7 +337,7 @@ preflight() {
   done
 
   if ! wait_no_trainer 300; then
-    fail_hard "a nirnay.train process remained active after 300s"
+    fail_hard "a nirnay_450m.train process remained active after 300s"
   fi
 }
 
@@ -515,7 +515,7 @@ phase_a_command() {
     return 2
   fi
   local args=(
-    -m nirnay.train --phase a --steps "$target" --batch-size "$BATCH_SIZE"
+    -m nirnay_450m.train --phase a --steps "$target" --batch-size "$BATCH_SIZE"
     --n-synth 512 --banking-dir data/banking77 --out-dir "$ARTIFACT_DIR"
     --lora-rank 8 --lr "$LEARNING_RATE" --seed 13 --checkpoint-every "$CHECKPOINT_EVERY"
     --log-every 50 --device "$DEVICE"
@@ -643,7 +643,7 @@ run_phase_b() {
   log "Starting Phase B from $CHECKPOINT"
   local rc=0
   set +e
-  run_trainer -m nirnay.train --phase b --steps 50 --batch-size "$BATCH_SIZE" \
+  run_trainer -m nirnay_450m.train --phase b --steps 50 --batch-size "$BATCH_SIZE" \
     --n-synth 512 --banking-dir data/banking77 --out-dir "$ARTIFACT_DIR" \
     --lora-rank 8 --lr 0.0001 --seed 13 --device "$DEVICE" --group-size 4 \
     --phase-a-path "$CHECKPOINT"

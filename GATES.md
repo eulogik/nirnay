@@ -5,7 +5,7 @@ OWNS: src/nirnay/**, tests/**, scripts/**, pyproject.toml, uv.lock, GATES.md
 Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking only, unified [MASK] scorer, per-bucket temps refit, and a Jev-compatible `/v1/systemone` server that returns valid distributions for N questions in one pass. Days 15–35: concept bottleneck + MoME, deep supervision at 4/8/12, RLCD++ losses, 2-stage coarse-to-fine, G1–G7 regression, training-stack wiring (§2 data pipeline, plan loss assembly, Phase A SFT smoke), then runnable training path — real Banking77 corpus, Phase A CLI checkpointing, Phase B RLCD smoke, held-out eval with raw+fitted ECE. Full milestones (fitted ECE ≤0.08, Banking77 ≥0.65) stay plan §5 contracts for rented-GPU sessions and are deliberately not gates here.
 
 - [x] G1: Project installs and core package imports cleanly
-  CHECK: uv run python -c "import nirnay; import nirnay.model; import nirnay.server; print('nirnay import ok')"
+  CHECK: uv run python -c "import nirnay_450m; import nirnay_450m.model; import nirnay_450m.server; print('nirnay import ok')"
   EXPECT: nirnay import ok
   EVIDENCE: automatic-evidence=v1; definition-sha256=7acd432645e04fe3fb46afcf0b73efa58c464f00e54ba60dcc29a8de85fde2d7; exit=0; EXPECT=matched; output-sha256=7df0dfa8f97d03b85dae5a60342eca389227a5ed7ed39b340077cbf5be79e517; output-bytes=17; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
 

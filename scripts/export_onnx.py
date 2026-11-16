@@ -40,9 +40,9 @@ def main() -> int:
 
     os.environ.setdefault("HF_HOME", "/Volumes/KIOXIA 1TB/huggingface_cache")
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
-    from nirnay.agent import NirnayAgent
-    from nirnay.data import load_banking77_csv
-    from nirnay.train import collate_examples, encode_examples
+    from nirnay_450m.agent import NirnayAgent
+    from nirnay_450m.data import load_banking77_csv
+    from nirnay_450m.train import collate_examples, encode_examples
 
     agent = NirnayAgent(
         device=args.device, checkpoint_path=str(ckpt), enable_byte_path=False
@@ -93,7 +93,7 @@ def main() -> int:
     wrapped = ServeWrapper(model).eval()
     test = load_banking77_csv("data/banking77/test.csv", split="test")
     items = encode_examples(test[:20], agent.tok, max_bytes=model.max_bytes)
-    from nirnay.data import synthetic_policy_examples
+    from nirnay_450m.data import synthetic_policy_examples
 
     items += encode_examples(
         synthetic_policy_examples(n=32, seed=7), agent.tok,

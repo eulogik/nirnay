@@ -13,7 +13,7 @@ def main() -> int:
 
     from fastapi.testclient import TestClient
 
-    from nirnay.server import app
+    from nirnay_450m.server import app
 
     with TestClient(app) as client:
         h = client.get("/healthz")

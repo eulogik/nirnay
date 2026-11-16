@@ -32,19 +32,24 @@ def _load():
     global _MODEL, _LABELS
     if _MODEL is not None:
         return _MODEL
-    from nirnay.agent import NirnayAgent
+    from nirnay_450m.agent import NirnayAgent
 
+    here = os.path.dirname(os.path.abspath(__file__))
     ckpt = os.environ.get("NIRNAY_CHECKPOINT")
     if ckpt is None or not os.path.exists(ckpt):
-        from huggingface_hub import snapshot_download
+        baked = os.path.join(here, "phase_b.pt")
+        if os.path.exists(baked):
+            ckpt = baked
+        else:
+            from huggingface_hub import snapshot_download
 
-        repo = os.environ.get("NIRNAY_REPO", "eulogik/nirnay-450m")
-        local = snapshot_download(repo, allow_patterns=["phase_b.pt"])
-        ckpt = os.path.join(local, "phase_b.pt")
+            repo = os.environ.get("NIRNAY_REPO", "eulogik/nirnay-450m")
+            local = snapshot_download(repo, allow_patterns=["phase_b.pt"])
+            ckpt = os.path.join(local, "phase_b.pt")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     agent = NirnayAgent(device=device, checkpoint_path=ckpt, enable_byte_path=False)
     _MODEL = agent
-    from nirnay.data import BANKING77_LABELS
+    from nirnay_450m.data import BANKING77_LABELS
 
     _LABELS = list(BANKING77_LABELS)
     return agent

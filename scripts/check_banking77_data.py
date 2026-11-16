@@ -10,7 +10,7 @@ BANK_DIR = ROOT / "data" / "banking77"
 
 
 def main() -> int:
-    from nirnay.data import (
+    from nirnay_450m.data import (
         BANKING77_LABELS,
         freeze_hashes,
         load_banking77_dir,

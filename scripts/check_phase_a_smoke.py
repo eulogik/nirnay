@@ -12,15 +12,15 @@ def main() -> int:
 
     import torch
 
-    from nirnay.data import build_phase_a_mix, split_train_heldout
-    from nirnay.lora import count_trainable
-    from nirnay.train import NirnayTrainModel, PhaseASFT, collate_examples, encode_examples
+    from nirnay_450m.data import build_phase_a_mix, split_train_heldout
+    from nirnay_450m.lora import count_trainable
+    from nirnay_450m.train import NirnayTrainModel, PhaseASFT, collate_examples, encode_examples
 
     device = torch.device("cpu")
     agent_path = os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya")
 
     # Minimal base: load Laya agent's DecisionModel
-    from nirnay import load as load_agent
+    from nirnay_450m import load as load_agent
 
     agent = load_agent(agent_path, device="cpu", enable_byte_path=False, nope_fraction=1.0 / 3.0)
     base = agent.model

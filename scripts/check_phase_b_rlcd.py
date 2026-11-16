@@ -16,14 +16,14 @@ def main() -> int:
 
     import torch
 
-    from nirnay.data import build_phase_a_mix, split_train_heldout
-    from nirnay.rlcd import (
+    from nirnay_450m.data import build_phase_a_mix, split_train_heldout
+    from nirnay_450m.rlcd import (
         brier_reward,
         group_mean_advantages,
         policy_gradient_loss,
         rlcd_sample_reward,
     )
-    from nirnay.train import (
+    from nirnay_450m.train import (
         NirnayTrainModel,
         PhaseBRLCD,
         collate_examples,
@@ -53,7 +53,7 @@ def main() -> int:
         return 1
 
     # Full trainer ≥3 steps on Laya backbone
-    from nirnay import load as load_agent
+    from nirnay_450m import load as load_agent
 
     agent = load_agent(
         os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya"),

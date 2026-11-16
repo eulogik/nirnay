@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    from nirnay import load
+    from nirnay_450m import load
 
     agent = load(
         "convaiinnovations/laya",

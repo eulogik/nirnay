@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import torch
 
-from nirnay.bytes import ByteFusion, BytePathConfig
-from nirnay.coarse2fine import CoarseToFine
-from nirnay.losses import assemble_plan_loss, plan_loss_from_batch
-from nirnay.nope import split_head_range
-from nirnay.rlcd import policy_gradient_loss
-from nirnay.train import collate_examples
+from nirnay_450m.bytes import ByteFusion, BytePathConfig
+from nirnay_450m.coarse2fine import CoarseToFine
+from nirnay_450m.losses import assemble_plan_loss, plan_loss_from_batch
+from nirnay_450m.nope import split_head_range
+from nirnay_450m.rlcd import policy_gradient_loss
+from nirnay_450m.train import collate_examples
 
 
 def main() -> int:

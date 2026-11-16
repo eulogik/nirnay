@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECKS: list[tuple[str, list[str], str]] = [
     (
         "G1",
-        [sys.executable, "-c", "import nirnay; import nirnay.model; import nirnay.server; print('nirnay import ok')"],
+        [sys.executable, "-c", "import nirnay_450m; import nirnay_450m.model; import nirnay_450m.server; print('nirnay import ok')"],
         "nirnay import ok",
     ),
     ("G3", [sys.executable, str(ROOT / "scripts" / "check_byte_path.py")], "BYTE_PATH_OK"),

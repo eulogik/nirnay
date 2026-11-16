@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.concepts import PARAM_BUDGET, ConceptBottleneck, ConceptConfig
+    from nirnay_450m.concepts import PARAM_BUDGET, ConceptBottleneck, ConceptConfig
 
     torch.manual_seed(0)
     cfg = ConceptConfig()  # 1024→128 product VQ, chunk 4, 32 codes, M=4 slots

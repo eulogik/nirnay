@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.losses import (
+    from nirnay_450m.losses import (
         CAL_LAMBDA_DEFAULT,
         DEEP_COEF,
         NCP_COEF,

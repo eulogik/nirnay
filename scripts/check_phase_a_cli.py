@@ -16,7 +16,7 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as td:
         out_dir = Path(td) / "phase_a"
-        from nirnay.train import main as train_main
+        from nirnay_450m.train import main as train_main
 
         rc = train_main(
             [
@@ -77,7 +77,7 @@ def main() -> int:
         import gc
 
         gc.collect()
-        from nirnay.agent import NirnayAgent
+        from nirnay_450m.agent import NirnayAgent
 
         runtime = NirnayAgent(
             device="cpu",
@@ -97,7 +97,7 @@ def main() -> int:
         ) > 1e-9:
             print(f"PHASE_A_CLI_FAIL runtime_nope={nope_report}", file=sys.stderr)
             return 1
-        from nirnay.data import BANKING77_LABELS
+        from nirnay_450m.data import BANKING77_LABELS
 
         runtime_answer = runtime.system_one(
             "The card payment was declined twice.",

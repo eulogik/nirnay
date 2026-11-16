@@ -1,12 +1,12 @@
 [project]
-name = "nirnay"
-version = "0.1.0"
-description = "NIRNAY: small calibrated decision model, Banking77 87.9% (Jev/Laya-compatible wire format)"
+name = "nirnay-450m"
+version = "0.2.0"
+description = "NIRNAY 450M: bring your own labels, get calibrated decisions locally (Banking77 87.9%)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
 authors = [
-    { name = "Eulogik", email = "info@eulogik.com" },
+    { name = "Gautam Kishore", email = "info@eulogik.com" },
 ]
 keywords = [
     "banking77",
@@ -51,8 +51,9 @@ dev = [
 ]
 
 [project.scripts]
-nirnay-server = "nirnay.server:main"
-nirnay-train = "nirnay.train:main"
+nirnay = "nirnay_450m.cli:main"
+nirnay-server = "nirnay_450m.server:main"
+nirnay-train = "nirnay_450m.train:main"
 
 [project.urls]
 Homepage = "https://eulogik.com"
@@ -60,13 +61,14 @@ Repository = "https://github.com/eulogik/nirnay"
 Documentation = "https://github.com/eulogik/nirnay/blob/main/README.md"
 "Bug Tracker" = "https://github.com/eulogik/nirnay/issues"
 "Model Weights" = "https://huggingface.co/eulogik/nirnay-450m"
+"Live Demo" = "https://huggingface.co/spaces/GautamKishore/nirnay-demo"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/nirnay"]
+packages = ["src/nirnay_450m"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

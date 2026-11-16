@@ -35,19 +35,40 @@ class SystemOneRequest(BaseModel):
     questions: dict[str, Question] = Field(default_factory=dict)
 
 
+def _resolve_default_checkpoint() -> str | None:
+    """Explicit path, or the public 450M checkpoint, or raw Laya if forced."""
+    explicit = os.environ.get("NIRNAY_CHECKPOINT")
+    if explicit:
+        return explicit
+    if os.environ.get("NIRNAY_RAW_LAYA") == "1":
+        return None
+    from huggingface_hub import hf_hub_download
+
+    repo = os.environ.get("NIRNAY_REPO", "eulogik/nirnay-450m")
+    try:
+        return hf_hub_download(repo_id=repo, filename="phase_b.pt")
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            "could not fetch the default NIRNAY checkpoint from "
+            f"{repo} ({type(exc).__name__}: {exc}). Pass NIRNAY_CHECKPOINT, "
+            "set NIRNAY_RAW_LAYA=1 for the untrained base, or run with "
+            "network access once to cache the weights."
+        ) from exc
+
+
 def get_agent() -> NirnayAgent:
     global _agent
     if _agent is None:
         path = os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya")
         device = os.environ.get("NIRNAY_DEVICE")  # None → auto
         temps = os.environ.get("NIRNAY_TEMPS")
-        checkpoint = os.environ.get("NIRNAY_CHECKPOINT")
+        checkpoint = _resolve_default_checkpoint()
         lora_rank = int(os.environ.get("NIRNAY_LORA_RANK", "8"))
         _agent = NirnayAgent(
             path,
             device=device,
             temps_path=temps or None,
-            checkpoint_path=checkpoint or None,
+            checkpoint_path=checkpoint,
             lora_rank=lora_rank,
         )
 
@@ -60,7 +81,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="NIRNAY-1", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="NIRNAY-1", version="0.2.0", lifespan=lifespan)
 
 
 @app.get("/healthz")

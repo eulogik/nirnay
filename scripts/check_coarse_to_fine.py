@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.coarse2fine import (
+    from nirnay_450m.coarse2fine import (
         DEFAULT_TOP_K,
         CoarseToFine,
         stage1_retrieve,

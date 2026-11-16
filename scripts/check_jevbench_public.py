@@ -92,7 +92,7 @@ def main() -> int:
     else:
         from fastapi.testclient import TestClient
 
-        from nirnay.server import app
+        from nirnay_450m.server import app
 
         client_holder = {}
 

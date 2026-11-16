@@ -8,8 +8,8 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from nirnay.losses import LossParts
-from nirnay.train import PhaseASFT
+from nirnay_450m.losses import LossParts
+from nirnay_450m.train import PhaseASFT
 
 
 class TinyModel(nn.Module):

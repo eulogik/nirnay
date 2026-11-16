@@ -10,7 +10,7 @@ import numpy as np
 
 
 def main() -> int:
-    from nirnay.temps import TEMP_MAX, TEMP_MIN, fit_all_buckets, write_temps
+    from nirnay_450m.temps import TEMP_MAX, TEMP_MIN, fit_all_buckets, write_temps
 
     rng = np.random.default_rng(0)
     records = []

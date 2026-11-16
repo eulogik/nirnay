@@ -36,10 +36,10 @@ def main() -> int:
 
     os.environ.setdefault("HF_HOME", "/Volumes/KIOXIA 1TB/huggingface_cache")
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
-    from nirnay.agent import NirnayAgent
-    from nirnay.data import load_banking77_csv
-    from nirnay.eval import evaluate_logits
-    from nirnay.train import collate_examples, encode_examples
+    from nirnay_450m.agent import NirnayAgent
+    from nirnay_450m.data import load_banking77_csv
+    from nirnay_450m.eval import evaluate_logits
+    from nirnay_450m.train import collate_examples, encode_examples
 
     data_dir = Path(args.data_dir)
     test_path = data_dir / "test.csv"

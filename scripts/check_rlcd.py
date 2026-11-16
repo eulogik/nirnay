@@ -8,7 +8,7 @@ import sys
 def main() -> int:
     import torch
 
-    from nirnay.rlcd import (
+    from nirnay_450m.rlcd import (
         brier_reward,
         decision_token_ce,
         group_mean_advantages,

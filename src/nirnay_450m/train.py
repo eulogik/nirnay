@@ -934,7 +934,7 @@ def run_phase_a(
     train_ex, held_ex = split_train_heldout(mix, heldout_frac=0.2, seed=seed)
     write_freeze_manifest(out / "freeze_manifest.json", mix)
 
-    from nirnay import load as load_agent
+    from nirnay_450m import load as load_agent
 
     agent_path = os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya")
     agent = load_agent(
@@ -1150,7 +1150,7 @@ def run_phase_a(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """`python -m nirnay.train` — Phase A CLI (Phase B via --phase b)."""
+    """`python -m nirnay_450m.train` — Phase A CLI (Phase B via --phase b)."""
     import argparse
 
     ap = argparse.ArgumentParser(prog="nirnay.train", description="NIRNAY Phase A/B training")
@@ -1312,7 +1312,7 @@ def run_phase_b(
     train_ex, held_ex = split_train_heldout(mix, heldout_frac=0.2, seed=seed)
     write_freeze_manifest(out / "freeze_manifest.json", mix)
 
-    from nirnay import load as load_agent
+    from nirnay_450m import load as load_agent
 
     agent_path = os.environ.get("NIRNAY_MODEL", "convaiinnovations/laya")
     agent = load_agent(
