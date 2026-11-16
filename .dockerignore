@@ -1,0 +1,11 @@
+.git
+.venv
+artifacts
+dist
+build
+logs
+third_party
+data
+__pycache__
+*.pyc
+.DS_Store
