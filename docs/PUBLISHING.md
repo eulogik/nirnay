@@ -1,5 +1,8 @@
 # Publishing nirnay-450m
 
+**Status: 0.2.0 published 2026-11-16.**
+https://pypi.org/project/nirnay-450m/
+
 The distribution is `nirnay-450m`, not `nirnay`. The name `nirnay` belongs
 to an unrelated Sarvam API wrapper on PyPI (Dobbyisus/nirnay, 0.2.0), and
 it installs a top-level `nirnay` module. Do not publish under that name.

@@ -74,8 +74,7 @@ Live demo: **[huggingface.co/spaces/GautamKishore/nirnay-demo](https://huggingfa
 ### One line, your labels
 
 ```bash
-pip install git+https://github.com/eulogik/nirnay
-# after the PyPI release: pip install nirnay-450m
+pip install nirnay-450m
 ```
 
 ```python
