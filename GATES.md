@@ -7,7 +7,7 @@ Scope: Days 1–14: Laya-forked decision model with byte path, NoPE head-masking
 - [x] G1: Project installs and core package imports cleanly
   CHECK: uv run python -c "import nirnay_450m; import nirnay_450m.model; import nirnay_450m.server; print('nirnay import ok')"
   EXPECT: nirnay import ok
-  EVIDENCE: automatic-evidence=v1; definition-sha256=7acd432645e04fe3fb46afcf0b73efa58c464f00e54ba60dcc29a8de85fde2d7; exit=0; EXPECT=matched; output-sha256=7df0dfa8f97d03b85dae5a60342eca389227a5ed7ed39b340077cbf5be79e517; output-bytes=17; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=afc7568fe86c/59 entries
+  EVIDENCE: automatic-evidence=v1; definition-sha256=95edd24d2d6a791ab0a4dada11a69418df52bc8bbc5fcca72f7788759032fa34; exit=0; EXPECT=matched; output-sha256=7df0dfa8f97d03b85dae5a60342eca389227a5ed7ed39b340077cbf5be79e517; output-bytes=17; shell=/bin/sh; cwd=/Users/eulogikdeveloper/Documents/NIRNAY; path=b04bdf950a43/60 entries
 
 - [x] G2: Laya checkpoint loads and one forward pass yields valid probability distributions (each choice/score dist sums to 1±0.01, all p in [0,1], noul in [0,1]) for a multi-question request
   CHECK: uv run python scripts/check_forward.py

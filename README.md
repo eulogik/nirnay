@@ -108,8 +108,10 @@ nirnay classify "my ticket text" --labels labels.json \
 `train.jsonl` is one `{"state": "...", "label": "..."}` per line. `fit`
 freezes the encoder, trains the choice readout, early-stops on a held-out
 split, fits a temperature, and writes a checkpoint plus a temps file. It
-prints the held-out accuracy before and after. This is the difference
-between a demo and a tool: your labels, your data, minutes on a laptop.
+prints the held-out accuracy before and after. If you already have the
+base checkpoint locally, add `--base-checkpoint /path/phase_b.pt` to skip
+the download. This is the difference between a demo and a tool: your
+labels, your data, minutes on a laptop.
 
 ### CLI
 
