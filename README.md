@@ -97,6 +97,20 @@ it scores 0.9167 with the original names and 0.8833 with neutral keys
 New label sets work without retraining when they are in the same domain.
 For a new domain, fine-tuning is the honest next step.
 
+### Your own labels, with examples
+
+```bash
+nirnay fit --data train.jsonl --labels labels.json --out my_model.pt --steps 200
+nirnay classify "my ticket text" --labels labels.json \
+  --checkpoint my_model.pt --temps my_model.temps.json
+```
+
+`train.jsonl` is one `{"state": "...", "label": "..."}` per line. `fit`
+freezes the encoder, trains the choice readout, early-stops on a held-out
+split, fits a temperature, and writes a checkpoint plus a temps file. It
+prints the held-out accuracy before and after. This is the difference
+between a demo and a tool: your labels, your data, minutes on a laptop.
+
 ### CLI
 
 ```bash

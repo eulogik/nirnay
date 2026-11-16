@@ -47,6 +47,7 @@ def _classify(args: argparse.Namespace) -> int:
         checkpoint=args.checkpoint,
         device=args.device,
         base_model=args.base_model,
+        temps_path=args.temps,
     )
 
     top_k = args.top_k or None
@@ -93,9 +94,38 @@ def _classify(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fit(args: argparse.Namespace) -> int:
+    from .fit import fit_custom
+
+    result = fit_custom(
+        args.data,
+        labels=args.labels,
+        out=args.out,
+        steps=args.steps,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        seed=args.seed,
+        device=args.device,
+        base_checkpoint=args.base_checkpoint,
+        base_model=args.base_model,
+        repo=args.repo,
+        instructions=args.instructions,
+    )
+    before = result["before"]["accuracy"] if result["before"] else None
+    after = result["after"]["accuracy"] if result["after"] else None
+    print(
+        f"FIT_OK ckpt={result['checkpoint']} labels={len(result['labels'])} "
+        f"train={result['n_train']} heldout={result['n_heldout']} "
+        f"acc_before={before} acc_after={after} temps={result['temps']}"
+    )
+    return 0
+
+
 def _serve(args: argparse.Namespace) -> int:
     if args.checkpoint:
         os.environ["NIRNAY_CHECKPOINT"] = str(Path(args.checkpoint).expanduser())
+    if args.temps:
+        os.environ["NIRNAY_TEMPS"] = str(Path(args.temps).expanduser())
     if args.device:
         os.environ["NIRNAY_DEVICE"] = args.device
     if args.base_model:
@@ -161,6 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--device", default=None)
     c.add_argument("--repo", default="eulogik/nirnay-450m")
     c.add_argument("--base-model", default="convaiinnovations/laya")
+    c.add_argument("--temps", default=None, help="temperature JSON from nirnay fit")
     c.set_defaults(func=_classify)
 
     s = sub.add_parser("serve", help="Jev-compatible HTTP server")
@@ -170,10 +201,26 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--device", default=None)
     s.add_argument("--repo", default=None)
     s.add_argument("--base-model", default=None)
+    s.add_argument("--temps", default=None)
     s.set_defaults(func=_serve)
 
     d = sub.add_parser("doctor", help="print environment and model status")
     d.set_defaults(func=_doctor)
+
+    f = sub.add_parser("fit", help="adapt the choice scorer to your own labels")
+    f.add_argument("--data", required=True, help="JSONL with state and label")
+    f.add_argument("--labels", default=None, help="JSON labels file (id to description)")
+    f.add_argument("--out", default="nirnay_custom.pt")
+    f.add_argument("--steps", type=int, default=200)
+    f.add_argument("--batch-size", type=int, default=4)
+    f.add_argument("--lr", type=float, default=1e-3)
+    f.add_argument("--seed", type=int, default=13)
+    f.add_argument("--device", default=None)
+    f.add_argument("--base-checkpoint", default=None)
+    f.add_argument("--base-model", default="convaiinnovations/laya")
+    f.add_argument("--repo", default="eulogik/nirnay-450m")
+    f.add_argument("--instructions", default="Classify the state into exactly one of the labels.")
+    f.set_defaults(func=_fit)
     return parser
 
 

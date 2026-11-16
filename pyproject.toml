@@ -1,6 +1,6 @@
 [project]
 name = "nirnay-450m"
-version = "0.2.0"
+version = "0.2.1"
 description = "NIRNAY 450M: bring your own labels, get calibrated decisions locally (Banking77 87.9%)"
 readme = "README.md"
 license = { text = "Apache-2.0" }

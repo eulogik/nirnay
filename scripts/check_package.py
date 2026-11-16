@@ -9,7 +9,7 @@ def main() -> int:
     from nirnay_450m import Classifier, Decision, NirnayAgent, normalise_labels
     from nirnay_450m.cli import build_parser
 
-    assert nirnay_450m.__version__ == "0.2.0", nirnay_450m.__version__
+    assert nirnay_450m.__version__ == "0.2.1", nirnay_450m.__version__
 
     labels = normalise_labels({"a": "first", "b": ""})
     assert labels == {"a": "first", "b": "b"}, labels
@@ -23,6 +23,8 @@ def main() -> int:
     assert args.command == "classify" and args.text == "hello"
     args = parser.parse_args(["serve", "--port", "9001"])
     assert args.command == "serve" and args.port == 9001
+    args = parser.parse_args(["fit", "--data", "x.jsonl"])
+    assert args.command == "fit" and args.data == "x.jsonl"
 
     d = Decision(choice="a", confidence=0.9, probabilities={"a": 0.9, "b": 0.1})
     assert json.loads(json.dumps(d.as_dict()))["choice"] == "a"
@@ -36,7 +38,7 @@ def main() -> int:
         pass
 
     assert Classifier and NirnayAgent
-    print("PACKAGE_OK version=0.2.0 labels77=true cli=classify,serve,doctor")
+    print("PACKAGE_OK version=0.2.1 labels77=true cli=classify,serve,doctor,fit")
     return 0
 
 

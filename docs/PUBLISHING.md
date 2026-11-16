@@ -1,6 +1,6 @@
 # Publishing nirnay-450m
 
-**Status: 0.2.0 published 2026-11-16.**
+**Status: 0.2.1 published 2026-11-16 (adds `nirnay fit`).**
 https://pypi.org/project/nirnay-450m/
 
 The distribution is `nirnay-450m`, not `nirnay`. The name `nirnay` belongs

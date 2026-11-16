@@ -95,6 +95,7 @@ class Classifier:
         cache_dir: str | Path | None = None,
         token: str | None = None,
         enable_byte_path: bool = False,
+        temps_path: str | Path | None = None,
     ):
         self.model = model
         self.checkpoint = str(checkpoint) if checkpoint else None
@@ -103,6 +104,7 @@ class Classifier:
         self.cache_dir = str(cache_dir) if cache_dir else None
         self.token = token
         self.enable_byte_path = enable_byte_path
+        self.temps_path = str(temps_path) if temps_path else None
         self._agent = None
 
     def resolve_checkpoint(self) -> str:
@@ -135,6 +137,7 @@ class Classifier:
                 checkpoint_path=self.resolve_checkpoint(),
                 enable_byte_path=self.enable_byte_path,
                 token=self.token,
+                temps_path=self.temps_path,
             )
         return self._agent
 
