@@ -62,7 +62,7 @@ Jev figures above are third-party published, never measured here (no API access)
 
 * **JevBench overall.** 72.1 vs our 0.55 public: intelligence, sealed decisions, calibration at scale. Different league, honestly stated.
 * **Long documents.** Our context caps at 512 tokens. Their API takes more.
-* **Zero setup.** Their API works with a key. Ours needs a local install plus a 466MB checkpoint download.
+* **Zero setup.** Their API works with a key. Ours needs a local install and a one-time 466MB checkpoint download, then it runs offline.
 * **Languages.** We trained English banking. They serve many languages out of the box.
 
 Speed, batch-1, measured 2026-09-30: **209 ms on M4 MPS, 361 ms on CPU.** Faster than Jev API calls (310 to 478 ms in independent runs). Slower than Laya's 33 ms. ONNX ships (parity proven) but gave no CPU speedup; int8 is the open latency lever.
