@@ -112,8 +112,10 @@ class Classifier:
                 raise FileNotFoundError(f"checkpoint not found: {path}")
             return str(path)
         local = Path(self.model)
-        if local.exists():
+        if local.is_file():
             return str(local)
+        if local.is_dir() and (local / DEFAULT_CHECKPOINT).exists():
+            return str(local / DEFAULT_CHECKPOINT)
         from huggingface_hub import hf_hub_download
 
         return hf_hub_download(

@@ -1,0 +1,17 @@
+{
+  "experiment": "dynamic int8 ONNX quantization",
+  "source": "artifacts/phase_b/phase_b.onnx",
+  "artifact": "artifacts/phase_b/phase_b_int8.onnx",
+  "config": "onnxruntime quantize_dynamic, QuantType.QInt8, MatMul only, per-tensor, quant_pre_process skip_symbolic_shape=True",
+  "artifact_size_mb": 561,
+  "parity_vs_float_onnx": {
+    "argmax_agree": "20/24",
+    "max_abs_logit_delta": 9.79
+  },
+  "latency_same_process": {
+    "float_cpu_ms": 542.6,
+    "int8_cpu_ms": 359.0
+  },
+  "verdict": "REJECTED. Faster but flips 4 of 24 decisions; not shippable for a calibrated classifier. The Laya/ModernBERT family has attention-sink outliers, consistent with the llama.cpp Laya reviewer's note that Q8_0 changed ~90/2000 Julia-1 decisions. A safe quantizer would need per-channel/per-block protection or keeping sensitive layers in F16, then re-proving parity.",
+  "date": "2026-11-16"
+}
